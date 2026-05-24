@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from "react-leaflet";
 import L from "leaflet";
 import { Area, ReportStatus } from "@/lib/mockData";
 import { setSelectedAreaId } from "@/store/slices/appSlice";
@@ -118,12 +118,46 @@ export default function LeafletMap({
         zoomControl={true}
         scrollWheelZoom={true}
       >
-        {/* Beautiful high-fidelity clean vector tiles layer */}
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          maxZoom={20}
-        />
+        <LayersControl position="topright">
+          {/* Default Layer: Hybrid Satellite Map showing streets, estates, and labels */}
+          <LayersControl.BaseLayer checked name="Satellite Hybrid">
+            <>
+              <TileLayer
+                attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={20}
+              />
+              <TileLayer
+                attribution='&copy; Esri'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={20}
+              />
+              <TileLayer
+                attribution='&copy; Esri'
+                url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"
+                maxZoom={20}
+              />
+            </>
+          </LayersControl.BaseLayer>
+
+          {/* Pure Satellite Imagery Layer */}
+          <LayersControl.BaseLayer name="Satellite Imagery">
+            <TileLayer
+              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              maxZoom={20}
+            />
+          </LayersControl.BaseLayer>
+
+          {/* Clean Voyager Vector Layer */}
+          <LayersControl.BaseLayer name="Vector Street Map">
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              maxZoom={20}
+            />
+          </LayersControl.BaseLayer>
+        </LayersControl>
 
         {/* Pulsing User Geolocation Marker */}
         {userLocation && (

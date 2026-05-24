@@ -6,7 +6,7 @@ import { setSelectedAreaId, setDetectedAreaId, setIsLocating, setSearchQuery, se
 import { useRouter } from "next/navigation";
 import { Map as MapIcon } from "lucide-react";
 import { getAreaStatusFromReports } from "@/lib/db";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 
 // Custom Subcomponents
@@ -41,8 +41,52 @@ export default function AreasPage() {
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
   const isLocating = useAppSelector((state) => state.app.isLocating);
   const userLocation = useAppSelector((state) => state.app.userLocation);
-
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Active silent location synchronization on page load to populate "Near You" section automatically
+  useEffect(() => {
+    if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
+
+    // Only ping browser GPS if userLocation is not already set in Redux
+    if (!userLocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const coords: [number, number] = [latitude, longitude];
+
+          // Set location coordinate globals
+          dispatch(setUserLocation(coords));
+
+          // Find mathematically closest seeded LGA
+          let closestArea = areas[0];
+          let minDistance = Infinity;
+
+          areas.forEach((area) => {
+            const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestArea = area;
+            }
+          });
+
+          // Trigger dynamic focus selection silently
+          dispatch(setDetectedAreaId(closestArea.id));
+        },
+        (error) => {
+          // If denied or timed out, default to Yaba fallback coordinates silently
+          console.log("Silent mount location check skipped:", error);
+          const fallbackCoords: [number, number] = [6.5095, 3.3711];
+          dispatch(setUserLocation(fallbackCoords));
+          dispatch(setDetectedAreaId("area-1")); // Default Yaba
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 3600000 // Cache for 1 hour to prevent redundant satellite checks
+        }
+      );
+    }
+  }, [userLocation, areas, dispatch]);
 
   // Real GPS Location detection using Geolocation and Nominatim APIs
   const handleDetectLocation = () => {

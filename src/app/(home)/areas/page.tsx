@@ -18,9 +18,9 @@ const getHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: nu
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -90,7 +90,7 @@ export default function AreasPage() {
             const data = await response.json();
             const address = data.address || {};
             const lgaName = address.county || address.city_district || address.suburb || address.neighbourhood || "Lagos";
-            
+
             toast.success(`GPS Located near ${lgaName}! Closest neighborhood: ${closestArea.name}.`, {
               icon: "📍",
               duration: 4000
@@ -299,9 +299,9 @@ export default function AreasPage() {
         <button
           onClick={handleDetectLocation}
           disabled={isLocating}
-          className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl font-bold text-xs uppercase tracking-wider border transition-all duration-300 transform active:scale-95 ${isLocating
+          className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl font-medium text-xs tracking-wider border transition-all duration-300 transform active:scale-95 ${isLocating
             ? "bg-emerald-100 text-emerald-600 border-emerald-200 cursor-default"
-            : "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-200 cursor-pointer"
+            : " text-[#109541] border-[#109541] cursor-pointer"
             }`}
         >
           <Compass className={`h-4 w-4 ${isLocating ? "animate-spin" : ""}`} />
@@ -317,7 +317,7 @@ export default function AreasPage() {
           value={searchQuery}
           onChange={(e) => dispatch(setSearchQuery(e.target.value))}
           placeholder="Search neighborhoods..."
-          className="w-full h-14 pl-12 pr-4 rounded-3xl border border-slate-150/60 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 shadow-sm text-sm font-medium transition-all"
+          className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 text-sm font-medium transition-all"
         />
       </div>
 
@@ -329,14 +329,14 @@ export default function AreasPage() {
           {/* Desktop Heading layout (remains fully functional) */}
           <div className="hidden md:flex items-center gap-2 mb-5">
             <Compass className="h-5 w-5 text-emerald-500 stroke-[2.25]" />
-            <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">
+            <h2 className="text-lg font-medium text-slate-800 tracking-tight">
               Near Your Current Location
             </h2>
           </div>
 
           {/* Mobile Heading layout matching screenshot: Near You followed by a green dot */}
           <div className="flex md:hidden items-center gap-1.5 mb-5 mt-2">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl font-medium text-slate-900 tracking-tight">
               Near You
             </h2>
             <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E] inline-block mt-2 ml-0.5" />
@@ -348,27 +348,27 @@ export default function AreasPage() {
                 {/* Desktop View Card (hidden on mobile, fully untouched) */}
                 <div
                   onClick={() => handleSelectArea(area.id)}
-                  className={`hidden md:flex rounded-3xl border p-6 backdrop-blur-md cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between min-h-[140px] glass-shadow ${selectedAreaId === area.id
-                    ? "bg-white border-emerald-200 ring-2 ring-emerald-50"
-                    : "bg-white/70 border-slate-100 hover:border-slate-200"
+                  className={`hidden md:flex rounded-xl border p-6 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 flex-col justify-between min-h-[140px] ${selectedAreaId === area.id
+                    ? "bg-white border-slate-200 ring-2 ring-emerald-50"
+                    : "bg-white/70 border-slate-200 hover:border-slate-200"
                     }`}
                 >
                   {/* Header Title and Status */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex flex-col">
-                      <span className="text-base font-extrabold text-slate-800 tracking-tight">
+                      <span className="text-base font-bold text-slate-800 tracking-tight">
                         {area.name}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400">
+                      <span className="text-[10px] font-medium text-slate-400">
                         {area.description}
                       </span>
                     </div>
                     <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      <span className={`px-2.5 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${getBadgeColor(area.status)}`}>
+                      <span className={`px-2.5 py-0.5 rounded-lg border text-[9px] font-bold tracking-wider ${getBadgeColor(area.status)}`}>
                         {area.status === "stable" ? "ONLINE" : area.status === "outage" ? "OUTAGE" : "FLUCTUATING"}
                       </span>
                       {userLocation && area.distance !== undefined && (
-                        <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[8px] font-black text-blue-500 uppercase tracking-widest leading-none">
+                        <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[8px] font-bold text-blue-500 tracking-widest leading-none">
                           {area.distance.toFixed(1)} km away
                         </span>
                       )}
@@ -392,7 +392,7 @@ export default function AreasPage() {
                           )}
                         </div>
                       ) : area.customInfo ? (
-                        <span className={`text-[10px] font-extrabold uppercase tracking-wide ${area.status === "outage" ? "text-red-500" : "text-amber-500"
+                        <span className={`text-[10px] font-extrabold tracking-wide ${area.status === "outage" ? "text-red-500" : "text-amber-500"
                           }`}>
                           {area.customInfo}
                         </span>
@@ -416,39 +416,36 @@ export default function AreasPage() {
                 {/* Mobile View Card matching screenshot exactly (hidden on desktop) */}
                 <div
                   onClick={() => handleSelectArea(area.id)}
-                  className={`md:hidden rounded-2xl border border-slate-150 bg-white p-5 flex items-center justify-between cursor-pointer transition-all duration-200 active:scale-98 shadow-sm ${
-                    selectedAreaId === area.id ? "ring-2 ring-emerald-50 border-emerald-200" : ""
-                  }`}
+                  className={`md:hidden rounded-2xl border border-slate-200 bg-white p-5 flex items-center justify-between cursor-pointer transition-all duration-200 active:scale-98 ${selectedAreaId === area.id ? "ring-2 ring-emerald-50 border-emerald-200" : ""
+                    }`}
                 >
                   <div className="flex flex-col gap-1.5 text-left">
-                    <span className="text-base font-black text-slate-800 tracking-tight leading-none">
+                    <span className="text-base font-bold text-slate-800 tracking-tight leading-none">
                       {area.name}
                     </span>
-                    <span className={`text-[10px] font-black uppercase tracking-wider leading-none ${
-                      area.status === "stable" ? "text-emerald-600" :
+                    <span className={`text-[10px] font-bold tracking-wider leading-none ${area.status === "stable" ? "text-emerald-600" :
                       area.status === "outage" ? "text-red-600" :
-                      "text-amber-500"
-                    }`}>
+                        "text-amber-500"
+                      }`}>
                       STATUS: {
                         area.status === "stable" ? "ONLINE" :
-                        area.status === "outage" ? "OUTAGE" :
-                        "FLUCTUATING"
+                          area.status === "outage" ? "OUTAGE" :
+                            "FLUCTUATING"
                       }
                     </span>
                   </div>
-                  
+
                   {/* Round Right Circle Badge with White Icon */}
-                  <div className={`h-11 w-11 rounded-full flex items-center justify-center shrink-0 shadow-sm ${
-                    area.status === "stable" ? "bg-[#22C55E] text-white" :
+                  <div className={`h-11 w-11 rounded-full flex items-center justify-center shrink-0 shadow-sm ${area.status === "stable" ? "bg-[#22C55E] text-white" :
                     area.status === "outage" ? "bg-[#ef4444] text-white" :
-                    "bg-[#FEF3C7] text-[#f59e0b] border border-[#FEF3C7]"
-                  }`}>
+                      "bg-[#FEF3C7] text-[#f59e0b] border border-[#FEF3C7]"
+                    }`}>
                     {area.status === "stable" ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5.5 w-5.5 fill-white text-[#22C55E]"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5.5 w-5.5 fill-white text-[#22C55E]"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /></svg>
                     ) : area.status === "outage" ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5.5 w-5.5 text-white"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5.5 w-5.5 text-white"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /><path d="M9 18h6" /><path d="M10 22h4" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
                     ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5 text-[#f59e0b]"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4.5 w-4.5 text-[#f59e0b]"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                     )}
                   </div>
                 </div>
@@ -462,7 +459,7 @@ export default function AreasPage() {
       <section className="mt-8">
         <div className="flex items-center justify-between gap-6 mb-6">
           <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl font-medium text-slate-900 tracking-tight">
               All Areas
             </h2>
           </div>
@@ -495,14 +492,14 @@ export default function AreasPage() {
             >
               {/* Alpha Indicator Anchor - Desktop */}
               <div className="hidden md:flex w-8 h-8 rounded-xl bg-slate-100 items-center justify-center shrink-0">
-                <span className="text-lg font-extrabold text-slate-400 leading-none">
+                <span className="text-lg text-slate-400 leading-none">
                   {letter}
                 </span>
               </div>
 
               {/* Alpha Indicator Anchor - Mobile viewports matching mockup */}
               <div className="md:hidden flex shrink-0 mt-3 mb-1">
-                <span className="text-lg font-black text-[#0A5C36] leading-none uppercase">
+                <span className="text-lg font-medium text-[#0A5C36] leading-none uppercase">
                   {letter}
                 </span>
               </div>
@@ -520,7 +517,7 @@ export default function AreasPage() {
                       className={`flex items-center justify-between text-left transition-all duration-200 transform active:scale-98 glass-shadow ${viewMode === "grid"
                         ? `h-12 px-4 rounded-xl border font-bold text-xs text-slate-700 bg-white/70 hover:bg-white border-slate-100 hover:border-slate-200 hover:-translate-y-0.5 ${selectedAreaId === area.id ? "ring-2 ring-emerald-100 border-emerald-200 bg-white" : ""
                         }`
-                        : `py-2.5 px-4 rounded-xl border text-xs font-bold text-slate-700 bg-white/70 hover:bg-white border-slate-100 hover:border-slate-200 ${selectedAreaId === area.id ? "ring-2 ring-emerald-100 border-emerald-200 bg-white" : ""
+                        : `py-2.5 px-4 rounded-xl border text-xs font-medium text-slate-700 bg-white/70 hover:bg-white border-slate-100 hover:border-slate-200 ${selectedAreaId === area.id ? "ring-2 ring-emerald-100 border-emerald-200 bg-white" : ""
                         }`
                         }`}
                     >
@@ -537,12 +534,11 @@ export default function AreasPage() {
                   <button
                     key={area.id}
                     onClick={() => handleSelectArea(area.id)}
-                    className={`w-full py-4 px-4.5 rounded-xl border border-slate-150 bg-white flex items-center justify-between text-left transition-all duration-200 active:scale-99 shadow-sm ${
-                      selectedAreaId === area.id ? "ring-2 ring-emerald-50 border-emerald-200" : ""
-                    }`}
+                    className={`w-full py-4 px-4.5 rounded-md border-b border-slate-200 bg-white flex items-center justify-between text-left transition-all duration-200 active:scale-99 ${selectedAreaId === area.id ? "ring-2 ring-emerald-50 border-emerald-200" : ""
+                      }`}
                   >
-                    <span className="text-sm font-extrabold text-slate-800">{area.name}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-slate-500"><path d="m9 18 6-6-6-6"/></svg>
+                    <span className="text-sm font-medium text-slate-800">{area.name}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-slate-500"><path d="m9 18 6-6-6-6" /></svg>
                   </button>
                 ))}
               </div>
@@ -554,25 +550,24 @@ export default function AreasPage() {
           {Object.keys(alphabetizedGroups).length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-2">
               <Search className="h-8 w-8 stroke-[1.5]" />
-              <p className="text-xs font-bold uppercase tracking-wider">
+              <p className="text-xs font-medium tracking-wider">
                 No neighborhoods found matching &ldquo;{searchQuery}&rdquo;
               </p>
             </div>
           )}
         </div>
 
-        {/* Mobile Detect Location Button matching screenshot exactly */}
-        <div className="md:hidden mt-8 mb-4">
+        {/* Mobile-only Detect Location Button - Fixed sticky at the bottom viewport, always visible */}
+        <div className="md:hidden fixed bottom-10 left-0 right-0 z-30 px-4 pb-6 pt-4 bg-linear-to-t from-white via-white/95 to-white/0 pointer-events-none">
           <button
             onClick={handleDetectLocation}
             disabled={isLocating}
-            className={`w-full h-13 rounded-2xl font-bold text-sm tracking-wide text-white transition-all flex items-center justify-center gap-2 active:scale-98 shadow-md ${
-              isLocating
-                ? "bg-emerald-800/80 cursor-default"
-                : "bg-[#0A5C36] hover:bg-emerald-950 cursor-pointer"
-            }`}
+            className={`pointer-events-auto w-full h-13 rounded-2xl font-bold text-sm tracking-wide text-white transition-all flex items-center justify-center gap-2 active:scale-98 shadow-md shadow-emerald-900/10 ${isLocating
+              ? "bg-emerald-800/80 cursor-default"
+              : "bg-[#0A5C36] hover:bg-emerald-950 cursor-pointer"
+              }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isLocating ? "animate-spin" : ""}`}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="1"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`h-5 w-5 ${isLocating ? "animate-spin" : ""}`}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="1" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="M2 12h2" /><path d="M20 12h2" /></svg>
             {isLocating ? "Locating GPS..." : "Detect My Location"}
           </button>
         </div>
@@ -583,7 +578,7 @@ export default function AreasPage() {
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 hidden md:block">
         <Link
           href="/map"
-          className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-widest shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+          className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs tracking-widest transition-all duration-300 transform hover:scale-105 active:scale-95"
         >
           <MapIcon className="h-4 w-4 text-emerald-400" />
           <span>View Integrated Live Map</span>

@@ -2,14 +2,71 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
+import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
 import { Zap, MapPin } from "lucide-react";
+import { useEffect } from "react";
+
+// Helper utility to calculate physical distance in kilometers using the Haversine formula
+const getHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 export default function Header() {
   const pathname = usePathname();
+  const dispatch = useAppDispatch();
   const currentRegion = useAppSelector((state) => state.app.currentRegion);
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
   const areas = useAppSelector((state) => state.data.areas);
+
+  // Silent automatic geolocation query on mount to update user-specific header coordinates
+  useEffect(() => {
+    if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const coords: [number, number] = [latitude, longitude];
+
+        // Store location coordinates globally
+        dispatch(setUserLocation(coords));
+
+        // Find mathematically closest seeded neighborhood
+        let closestArea = areas[0];
+        let minDistance = Infinity;
+
+        areas.forEach((area) => {
+          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestArea = area;
+          }
+        });
+
+        // Set selected area to auto-calibrate header label
+        dispatch(setSelectedAreaId(closestArea.id));
+      },
+      (err) => {
+        // Fail silently without disturbing UX on startup if geolocation not allowed yet
+        console.log("Auto-mount geolocator skipped or unauthorized:", err);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 6000,
+        maximumAge: Infinity // Use cached results to maximize load speeds
+      }
+    );
+  }, [areas, dispatch]);
 
   // Dynamically resolve exact focused location name
   const activeArea = areas.find((a) => a.id === selectedAreaId);

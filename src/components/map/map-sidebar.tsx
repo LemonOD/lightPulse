@@ -40,7 +40,7 @@ export default function MapSidebar({
 
       {/* Scrollable list of neighborhood statuses */}
       <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1 pb-4">
-        <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 px-1 mb-1">
+        <span className="text-[10px] font-bold tracking-widest text-slate-400 px-1 mb-1">
           Nearby Status
         </span>
 
@@ -48,15 +48,15 @@ export default function MapSidebar({
           <div
             key={item.id}
             onClick={() => handleSelectArea(item.id)}
-            className={`p-4 rounded-2xl border text-left cursor-pointer transition-all duration-300 transform active:scale-99 flex flex-col gap-2 ${
+            className={`p-4 rounded-xl border text-left cursor-pointer transition-all duration-300 transform active:scale-99 flex flex-col gap-2 ${
               selectedAreaId === item.id
-                ? "bg-white border-emerald-200 ring-2 ring-emerald-50 shadow-md"
-                : "bg-white/50 border-slate-100 hover:border-slate-200 hover:bg-white/80"
+                ? "bg-white border-[#22C55E] ring-2 ring-emerald-50"
+                : "bg-white/50 border-slate-200 hover:border-slate-200 hover:bg-white/80"
             }`}
           >
             <div className="flex items-center justify-between gap-4">
               <span className="text-xs font-extrabold text-slate-800 tracking-tight">
-                {item.name === "Yaba" ? "Yaba Tech" : item.name}
+                {item.name}
               </span>
               <span
                 className={`px-2 py-0.5 rounded-lg border text-[8px] font-black uppercase tracking-wider ${getBadgeColor(
@@ -76,9 +76,9 @@ export default function MapSidebar({
             <div className="flex flex-col gap-0.5">
               <span className="text-[9px] font-bold text-slate-400">{item.timeAgo}</span>
               <span
-                className={`text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 ${
+                className={`text-[9px] font-bold tracking-wide flex items-center gap-1 ${
                   item.status === "stable"
-                    ? "text-emerald-500"
+                    ? "text-[#22C55E]"
                     : item.status === "outage"
                     ? "text-red-500"
                     : item.status === "unstable"
@@ -105,7 +105,7 @@ export default function MapSidebar({
       {activeArea && (
         <button
           onClick={handleOpenReportModal}
-          className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-md shadow-emerald-100 transition-all flex items-center justify-center gap-2 mt-4 active:scale-95 cursor-pointer"
+          className="w-full h-12 bg-[#22C55E] hover:bg-emerald-600 text-white font-bold text-xs tracking-wider rounded-2xl shadow-md shadow-emerald-100 transition-all flex items-center justify-center gap-2 mt-4 active:scale-95 cursor-pointer"
         >
           <Plus className="h-4 w-4" />
           Report Status

@@ -51,7 +51,18 @@ export const INITIAL_AREAS: Area[] = [
   { id: "area-21", name: "Ikorodu", slug: "ikorodu", lat: 6.6172, lng: 3.5074, description: "Outer District, Lagos", region: "Lagos East" },
   { id: "area-22", name: "Ilasamaja", slug: "ilasamaja", lat: 6.5298, lng: 3.3325, description: "Mainland, Lagos", region: "Lagos Mainland" },
   { id: "area-23", name: "Isolo", slug: "isolo", lat: 6.5333, lng: 3.3167, description: "Mainland, Lagos", region: "Lagos Mainland" },
-  { id: "area-24", name: "Onike", slug: "onike", lat: 6.5076, lng: 3.3768, description: "Mainland, Lagos", region: "Lagos Mainland" }
+  { id: "area-24", name: "Onike", slug: "onike", lat: 6.5076, lng: 3.3768, description: "Mainland, Lagos", region: "Lagos Mainland" },
+  { id: "area-25", name: "Kosofe", slug: "kosofe", lat: 6.5588, lng: 3.3934, description: "Kosofe LGA, Lagos", region: "Lagos East" },
+  { id: "area-26", name: "Mushin", slug: "mushin", lat: 6.5294, lng: 3.3422, description: "Mushin LGA, Lagos", region: "Lagos Mainland" },
+  { id: "area-27", name: "Shomolu", slug: "shomolu", lat: 6.5385, lng: 3.3854, description: "Shomolu LGA, Lagos", region: "Lagos Mainland" },
+  { id: "area-28", name: "Badagry", slug: "badagry", lat: 6.4316, lng: 2.8876, description: "Badagry LGA, Lagos", region: "Lagos West" },
+  { id: "area-29", name: "Ajeromi-Ifelodun", slug: "ajeromi-ifelodun", lat: 6.4527, lng: 3.3328, description: "Ajeromi-Ifelodun LGA, Lagos", region: "Lagos West" },
+  { id: "area-30", name: "Ojo", slug: "ojo", lat: 6.4673, lng: 3.1812, description: "Ojo LGA, Lagos", region: "Lagos West" },
+  { id: "area-31", name: "Ibeju-Lekki", slug: "ibeju-lekki", lat: 6.4281, lng: 3.6219, description: "Ibeju-Lekki LGA, Lagos", region: "Lagos East" },
+  { id: "area-32", name: "Oshodi-Isolo", slug: "oshodi-isolo", lat: 6.5333, lng: 3.3167, description: "Oshodi-Isolo LGA, Lagos", region: "Lagos Mainland" },
+  { id: "area-33", name: "Lagos Island", slug: "lagos-island", lat: 6.4549, lng: 3.3947, description: "Lagos Island LGA, Lagos", region: "Lagos Island" },
+  { id: "area-34", name: "Lagos Mainland", slug: "lagos-mainland", lat: 6.5095, lng: 3.3711, description: "Lagos Mainland LGA, Lagos", region: "Lagos Mainland" },
+  { id: "area-35", name: "Eti-Osa", slug: "eti-osa", lat: 6.4326, lng: 3.4475, description: "Eti-Osa LGA, Lagos", region: "Lagos Island" }
 ];
 
 export const INITIAL_REPORTS: Report[] = [

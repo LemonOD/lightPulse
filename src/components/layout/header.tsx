@@ -8,6 +8,14 @@ import { Zap, MapPin } from "lucide-react";
 export default function Header() {
   const pathname = usePathname();
   const currentRegion = useAppSelector((state) => state.app.currentRegion);
+  const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
+  const areas = useAppSelector((state) => state.data.areas);
+
+  // Dynamically resolve exact focused location name
+  const activeArea = areas.find((a) => a.id === selectedAreaId);
+  const locationLabel = activeArea 
+    ? (activeArea.name === "Yaba" ? "Yaba Tech" : activeArea.name) 
+    : currentRegion;
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -24,7 +32,7 @@ export default function Header() {
           <div className="relative group">
             <button className="flex items-center gap-2 text-emerald-500 font-medium text-base transition-colors select-none">
               <Zap className="h-5 w-5 fill-current" />
-              <span>{currentRegion}</span>
+              <span>{locationLabel}</span>
             </button>
             
 
@@ -70,7 +78,7 @@ export default function Header() {
             <div className="relative group">
               <button className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 text-slate-700 text-sm font-medium transition-all duration-200 glass-shadow">
                 <MapPin className="h-4 w-4 text-slate-400" />
-                <span>{currentRegion}</span>
+                <span>{locationLabel}</span>
               </button>
               
               {/* Simple dropdown menu */}

@@ -6,6 +6,7 @@ interface AppState {
   selectedAreaId: string | null;
   searchQuery: string;
   isLocating: boolean;
+  userLocation: [number, number] | null;
 }
 
 const initialState: AppState = {
@@ -14,6 +15,7 @@ const initialState: AppState = {
   selectedAreaId: "area-1", // Default Yaba
   searchQuery: "",
   isLocating: false,
+  userLocation: null,
 };
 
 const appSlice = createSlice({
@@ -37,6 +39,9 @@ const appSlice = createSlice({
     },
     setIsLocating: (state, action: PayloadAction<boolean>) => {
       state.isLocating = action.payload;
+    },
+    setUserLocation: (state, action: PayloadAction<[number, number] | null>) => {
+      state.userLocation = action.payload;
     }
   }
 });
@@ -46,7 +51,8 @@ export const {
   setDetectedAreaId,
   setSelectedAreaId,
   setSearchQuery,
-  setIsLocating
+  setIsLocating,
+  setUserLocation
 } = appSlice.actions;
 
 export default appSlice.reducer;

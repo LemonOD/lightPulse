@@ -1,13 +1,28 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setSelectedAreaId } from "@/store/slices/appSlice";
+import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
 import { submitReport } from "@/store/slices/dataSlice";
 import { getAreaStatusFromReports } from "@/lib/db";
 import { X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
+
+// Helper utility to calculate physical distance in kilometers using the Haversine formula
+const getHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
 
 // Custom Subcomponents
 import MapSidebar from "@/components/map/map-sidebar";
@@ -36,6 +51,7 @@ export default function MapPage() {
   const areas = useAppSelector((state) => state.data.areas);
   const reports = useAppSelector((state) => state.data.reports);
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
+  const userLocation = useAppSelector((state) => state.app.userLocation);
 
   const [mapSearch, setMapSearch] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
@@ -43,6 +59,7 @@ export default function MapPage() {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLegendMobile, setShowLegendMobile] = useState(false);
+  const [centerOnUser, setCenterOnUser] = useState(false);
 
   // Compute areas with their live status metrics
   const areasWithStatus = useMemo(() => {
@@ -81,36 +98,142 @@ export default function MapPage() {
         detailLabel = confirmsCount > 0 ? `${confirmsCount} community verifications` : "Pending status validation";
       }
 
+      // Add distance calculation if userLocation is available!
+      let distanceValue = Infinity;
+      let distanceText = "";
+      if (userLocation) {
+        distanceValue = getHaversineDistance(userLocation[0], userLocation[1], area.lat, area.lng);
+        distanceText = `${distanceValue.toFixed(1)} km away`;
+        // Append distance to the detail label
+        detailLabel = `${distanceText} • ${detailLabel}`;
+      }
+
       return {
         ...area,
         status,
         timeAgo,
         detailLabel,
-        confirmsCount
+        confirmsCount,
+        distanceValue
       };
     });
-  }, [areas, reports]);
+  }, [areas, reports, userLocation]);
 
-  // Handle sidebar local search filtering
+  // Handle sidebar local search filtering and proximity sorting
   const filteredMapAreas = useMemo(() => {
-    if (!mapSearch.trim()) return areasWithStatus;
+    const list = [...areasWithStatus];
+
+    // Proximity sort if user GPS is loaded
+    if (userLocation) {
+      list.sort((a, b) => (a.distanceValue || 0) - (b.distanceValue || 0));
+    }
+
+    if (!mapSearch.trim()) return list;
     const query = mapSearch.toLowerCase().trim();
-    return areasWithStatus.filter(a => a.name.toLowerCase().includes(query));
-  }, [areasWithStatus, mapSearch]);
+    return list.filter(a => a.name.toLowerCase().includes(query));
+  }, [areasWithStatus, mapSearch, userLocation]);
 
   const activeArea = useMemo(() => {
     return areasWithStatus.find(a => a.id === selectedAreaId) || areasWithStatus[0] || null;
   }, [areasWithStatus, selectedAreaId]);
 
   const handleSelectArea = (areaId: string) => {
+    setCenterOnUser(false); // Stop locking camera to user coordinate
     dispatch(setSelectedAreaId(areaId));
   };
 
   const handleDetectLocation = () => {
-    toast.success("GPS Recalibrated! Centered on Yaba Tech.", {
-      icon: "📍",
-    });
-    dispatch(setSelectedAreaId("area-1")); // Force Yaba Tech
+    if (typeof window === "undefined" || !navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    const toastId = toast.loading("Pinging GPS satellites...");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const coords: [number, number] = [latitude, longitude];
+
+        // Store globally in Redux
+        dispatch(setUserLocation(coords));
+        setCenterOnUser(true);
+
+        // Compute distances and find closest area
+        let closestArea = areas[0];
+        let minDistance = Infinity;
+
+        areas.forEach((area) => {
+          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestArea = area;
+          }
+        });
+
+        // Trigger dynamic selection
+        dispatch(setSelectedAreaId(closestArea.id));
+
+        // Dismiss loading toast
+        toast.dismiss(toastId);
+
+        // Attempt reverse geocoding via Nominatim API (with standard graceful fallback)
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+            {
+              headers: {
+                "User-Agent": "LytPulse/1.0"
+              }
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            const address = data.address || {};
+            // LGA name is typically in 'county', 'city_district', 'suburb', or 'city'
+            const lgaName = address.county || address.city_district || address.suburb || address.neighbourhood || "Lagos";
+            
+            toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
+              icon: "📍",
+              duration: 4000
+            });
+          } else {
+            throw new Error("Nominatim API request failed");
+          }
+        } catch {
+          // Graceful fallback showing nearest mathematically calculated neighborhood
+          toast.success(`GPS Calibrated! Centered on closest area: ${closestArea.name} (${minDistance.toFixed(1)} km away).`, {
+            icon: "📍",
+            duration: 4000
+          });
+        }
+      },
+      (error) => {
+        toast.dismiss(toastId);
+        console.error("Geolocation error:", error);
+
+        // Robust fallback coordinates (Yaba central: [6.5095, 3.3711])
+        const fallbackCoords: [number, number] = [6.5095, 3.3711];
+        dispatch(setUserLocation(fallbackCoords));
+        setCenterOnUser(true);
+        dispatch(setSelectedAreaId("area-1")); // Yaba
+
+        if (error.code === error.PERMISSION_DENIED) {
+          toast.error("Location permission denied. Defaulting map center to Yaba.", {
+            icon: "🔒",
+          });
+        } else {
+          toast.error("GPS connection timed out. Defaulting map center to Yaba.", {
+            icon: "📡",
+          });
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
+    );
   };
 
   const handleOpenReportModal = () => {
@@ -176,7 +299,12 @@ export default function MapPage() {
 
         {/* Dynamic Client-Side Leaflet Map rendering wrapped in a z-0 container to send map to back */}
         <div className="absolute inset-0 z-0">
-          <LeafletMap areas={areasWithStatus} selectedAreaId={selectedAreaId} />
+          <LeafletMap
+            areas={areasWithStatus}
+            selectedAreaId={selectedAreaId}
+            userLocation={userLocation}
+            centerOnUser={centerOnUser}
+          />
         </div>
 
         {/* Floating Mobile Search Bar Overlay (Only visible on mobile) */}

@@ -10,31 +10,65 @@ import { useAppDispatch } from "@/store";
 interface LeafletMapProps {
   areas: (Area & { status: ReportStatus })[];
   selectedAreaId: string | null;
+  userLocation?: [number, number] | null;
+  centerOnUser?: boolean;
 }
 
-// Controller component to pan/zoom when selectedAreaId changes
-function MapController({ selectedAreaId, areas }: { selectedAreaId: string | null; areas: (Area & { status: ReportStatus })[] }) {
+// Controller component to pan/zoom when selectedAreaId or userLocation changes
+function MapController({
+  selectedAreaId,
+  areas,
+  userLocation,
+  centerOnUser
+}: {
+  selectedAreaId: string | null;
+  areas: (Area & { status: ReportStatus })[];
+  userLocation?: [number, number] | null;
+  centerOnUser?: boolean;
+}) {
   const map = useMap();
 
   useEffect(() => {
-    if (!selectedAreaId) return;
-    const target = areas.find(a => a.id === selectedAreaId);
-    if (target) {
-      map.setView([target.lat, target.lng], 15, {
+    if (centerOnUser && userLocation) {
+      map.setView(userLocation, 15, {
         animate: true,
         duration: 1.2
       });
+    } else if (selectedAreaId) {
+      const target = areas.find(a => a.id === selectedAreaId);
+      if (target) {
+        map.setView([target.lat, target.lng], 15, {
+          animate: true,
+          duration: 1.2
+        });
+      }
     }
-  }, [selectedAreaId, areas, map]);
+  }, [selectedAreaId, areas, map, userLocation, centerOnUser]);
 
   return null;
 }
 
-export default function LeafletMap({ areas, selectedAreaId }: LeafletMapProps) {
+export default function LeafletMap({
+  areas,
+  selectedAreaId,
+  userLocation = null,
+  centerOnUser = false
+}: LeafletMapProps) {
   const dispatch = useAppDispatch();
 
   // Lagos default coordinates center
   const centerPosition: [number, number] = [6.5095, 3.3711];
+
+  // Custom User Location pulsing radar icon
+  const userLocationIcon = L.divIcon({
+    html: `<div class="relative flex items-center justify-center h-6 w-6">
+             <span class="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+             <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-blue-500 border-2 border-white shadow-lg"></span>
+           </div>`,
+    className: "user-location-marker",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  });
 
   // Helper to compile dynamic premium HTML DivIcons for each status
   const getMarkerIcon = (status: ReportStatus, name: string) => {
@@ -91,6 +125,22 @@ export default function LeafletMap({ areas, selectedAreaId }: LeafletMapProps) {
           maxZoom={20}
         />
 
+        {/* Pulsing User Geolocation Marker */}
+        {userLocation && (
+          <Marker position={userLocation} icon={userLocationIcon}>
+            <Popup>
+              <div className="flex flex-col gap-1 p-1 font-sans">
+                <span className="text-xs font-black text-slate-800 tracking-tight leading-none uppercase">
+                  Your Location
+                </span>
+                <span className="text-[9px] font-bold text-slate-400">
+                  Accuracy calibrated via browser GPS
+                </span>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
         {/* Dynamic Interactive Markers */}
         {areas.map((area) => (
           <Marker
@@ -127,7 +177,12 @@ export default function LeafletMap({ areas, selectedAreaId }: LeafletMapProps) {
         ))}
 
         {/* Map Pan / Zoom active controller */}
-        <MapController selectedAreaId={selectedAreaId} areas={areas} />
+        <MapController
+          selectedAreaId={selectedAreaId}
+          areas={areas}
+          userLocation={userLocation}
+          centerOnUser={centerOnUser}
+        />
 
       </MapContainer>
     </div>

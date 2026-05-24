@@ -29,7 +29,7 @@ export default function BottomNav() {
                 : "bg-transparent text-slate-400"
             }`}
           >
-            <div className={`px-4 py-1 rounded-2xl transition-all duration-300 `}>
+            <div className={`px-4 rounded-2xl transition-all duration-300 `}>
               <Icon className="h-5 w-5 stroke-[2.25]" />
             </div>
             <span className={`text-[10px] font-semibold transition-colors duration-300 `}>

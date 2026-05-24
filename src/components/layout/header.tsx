@@ -22,7 +22,7 @@ export default function Header() {
         {/* MOBILE HEADER: Styled exactly like the screenshot */}
         <div className="flex md:hidden w-full items-center justify-between">
           <div className="relative group">
-            <button className="flex items-center gap-2 text-emerald-500 font-extrabold text-base transition-colors select-none">
+            <button className="flex items-center gap-2 text-emerald-500 font-medium text-base transition-colors select-none">
               <Zap className="h-5 w-5 fill-current" />
               <span>{currentRegion}</span>
             </button>

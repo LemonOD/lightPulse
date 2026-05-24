@@ -23,16 +23,16 @@ export default function BottomNav() {
           <Link
             key={item.name}
             href={item.href}
-            className={`flex flex-col items-center gap-1.5 rounded-xl cursor-pointer py-1 ${
+            className={`flex flex-col items-center  rounded-xl cursor-pointer py-1 ${
               isActive 
                 ? "bg-[#22C55E] text-white scale-105" 
                 : "bg-transparent text-slate-400"
             }`}
           >
-            <div className={`px-5 py-1 rounded-2xl transition-all duration-300 `}>
+            <div className={`px-4 py-1 rounded-2xl transition-all duration-300 `}>
               <Icon className="h-5 w-5 stroke-[2.25]" />
             </div>
-            <span className={`text-[10px] font-bold transition-colors duration-300 `}>
+            <span className={`text-[10px] font-semibold transition-colors duration-300 `}>
               {item.name}
             </span>
           </Link>

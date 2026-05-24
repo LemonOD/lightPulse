@@ -2,7 +2,8 @@
 
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
-import { submitReport } from "@/store/slices/dataSlice";
+import { submitReport, addLiveAreas } from "@/store/slices/dataSlice";
+import { GeocodedPlace } from "@/components/shared/address-autocomplete";
 import { getAreaStatusFromReports } from "@/lib/db";
 import { X } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -272,6 +273,23 @@ export default function MapPage() {
     }
   };
 
+  const handleSelectPlace = (place: GeocodedPlace) => {
+    const selectedArea = {
+      id: place.id,
+      name: place.name,
+      slug: place.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      lat: place.lat,
+      lng: place.lng,
+      description: place.description || "Lagos, Nigeria",
+      region: "Searched Address"
+    };
+
+    // Dispatch geocoded location to Redux state
+    dispatch(addLiveAreas([selectedArea]));
+    // Center Leaflet map and focus it
+    handleSelectArea(selectedArea.id);
+  };
+
   const getBadgeColor = (status: string) => {
     if (status === "stable") return "text-emerald-500 bg-emerald-50 border-emerald-100/50";
     if (status === "outage") return "text-red-500 bg-red-50 border-red-100/50";
@@ -313,6 +331,7 @@ export default function MapPage() {
           setMapSearch={setMapSearch}
           showLegendMobile={showLegendMobile}
           setShowLegendMobile={setShowLegendMobile}
+          handleSelectPlace={handleSelectPlace}
         />
 
         {/* Floating Search Results Dropdown List on Mobile */}

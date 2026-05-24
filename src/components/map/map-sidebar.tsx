@@ -2,6 +2,9 @@
 
 import { Search, Plus } from "lucide-react";
 import { Area, ReportStatus } from "@/lib/mockData";
+import AddressAutocomplete, { GeocodedPlace } from "../shared/address-autocomplete";
+import { useAppDispatch } from "@/store";
+import { addLiveAreas } from "@/store/slices/dataSlice";
 
 interface MapSidebarProps {
   mapSearch: string;
@@ -24,17 +27,38 @@ export default function MapSidebar({
   activeArea,
   getBadgeColor,
 }: MapSidebarProps) {
+  const dispatch = useAppDispatch();
+
+  const handleSelectPlace = (place: GeocodedPlace) => {
+    const selectedArea = {
+      id: place.id,
+      name: place.name,
+      slug: place.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      lat: place.lat,
+      lng: place.lng,
+      description: place.description || "Lagos, Nigeria",
+      region: "Searched Address"
+    };
+
+    // Dispatch geocoded location to data state
+    dispatch(addLiveAreas([selectedArea]));
+    // Center map & set as active area focus
+    handleSelectArea(selectedArea.id);
+  };
+
   return (
     <div className="hidden md:flex w-full md:w-96 shrink-0 flex-col bg-white/70 backdrop-blur-md border border-slate-100 p-5 rounded-3xl glass-shadow md:h-full md:overflow-hidden">
-      {/* Search Header Input */}
-      <div className="relative mb-5 group">
-        <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
-        <input
-          type="text"
-          value={mapSearch}
-          onChange={(e) => setMapSearch(e.target.value)}
-          placeholder="Search area (e.g. Yaba)..."
-          className="w-full h-11 pl-10 pr-4 rounded-2xl border border-slate-100 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 text-xs font-semibold tracking-wide"
+      {/* Autocomplete Address Search Header Input */}
+      <div className="relative mb-5">
+        <AddressAutocomplete
+          placeholder="Search addresses, estates, malls..."
+          onSelectPlace={handleSelectPlace}
+          onClear={() => setMapSearch("")}
+          onChangeQuery={setMapSearch}
+          initialValue={mapSearch}
+          inputClassName="w-full h-11 pl-10 pr-10 rounded-2xl border border-slate-100 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 text-xs font-semibold tracking-wide"
+          iconSizeClassName="h-4 w-4"
+          iconLeftClassName="left-3.5"
         />
       </div>
 

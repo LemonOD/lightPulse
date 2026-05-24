@@ -1,6 +1,11 @@
 "use client";
 
-import { Compass, Search } from "lucide-react";
+import { Compass } from "lucide-react";
+import AddressAutocomplete, { GeocodedPlace } from "../shared/address-autocomplete";
+import { useAppDispatch } from "@/store";
+import { addLiveAreas } from "@/store/slices/dataSlice";
+import { setSelectedAreaId } from "@/store/slices/appSlice";
+import { useRouter } from "next/navigation";
 
 interface AreasHeaderProps {
   searchQuery: string;
@@ -15,6 +20,29 @@ export default function AreasHeader({
   handleDetectLocation,
   isLocating
 }: AreasHeaderProps) {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+
+  const handleSelectPlace = (place: GeocodedPlace) => {
+    const selectedArea = {
+      id: place.id,
+      name: place.name,
+      slug: place.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      lat: place.lat,
+      lng: place.lng,
+      description: place.description || "Lagos, Nigeria",
+      region: "Searched Address"
+    };
+
+    // Add geolocated place to Redux store
+    dispatch(addLiveAreas([selectedArea]));
+    // Set as active neighborhood focus
+    dispatch(setSelectedAreaId(selectedArea.id));
+    
+    // Redirect smoothly to dashboard
+    router.push("/");
+  };
+
   return (
     <>
       {/* Title Header Grid - Hidden on Mobile viewports */}
@@ -43,15 +71,14 @@ export default function AreasHeader({
         </button>
       </div>
 
-      {/* Large Input Search Box */}
-      <div className="relative mb-8 group">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search neighborhoods..."
-          className="w-full h-14 pl-12 pr-4 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 text-sm font-medium transition-all"
+      {/* Large Input Address Autocomplete Search Box */}
+      <div className="relative mb-8">
+        <AddressAutocomplete
+          placeholder="Search addresses, landmarks, or estates in Lagos..."
+          onSelectPlace={handleSelectPlace}
+          onClear={() => onSearchChange("")}
+          onChangeQuery={onSearchChange}
+          initialValue={searchQuery}
         />
       </div>
     </>

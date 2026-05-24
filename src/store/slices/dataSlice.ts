@@ -65,7 +65,15 @@ export const confirmReportThunk = createAsyncThunk(
 const dataSlice = createSlice({
   name: "data",
   initialState,
-  reducers: {},
+  reducers: {
+    addLiveAreas: (state, action: PayloadAction<Area[]>) => {
+      action.payload.forEach((newArea) => {
+        if (!state.areas.some(a => a.id === newArea.id)) {
+          state.areas.push(newArea);
+        }
+      });
+    }
+  },
   extraReducers: (builder) => {
     builder
       // Fetch initial data
@@ -98,5 +106,7 @@ const dataSlice = createSlice({
       });
   }
 });
+
+export const { addLiveAreas } = dataSlice.actions;
 
 export default dataSlice.reducer;

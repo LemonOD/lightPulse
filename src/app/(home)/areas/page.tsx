@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setSelectedAreaId, setDetectedAreaId, setIsLocating, setSearchQuery, setUserLocation } from "@/store/slices/appSlice";
+import { addLiveAreas } from "@/store/slices/dataSlice";
 import { useRouter } from "next/navigation";
 import { Map as MapIcon } from "lucide-react";
 import { getAreaStatusFromReports } from "@/lib/db";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 
 // Custom Subcomponents
@@ -43,6 +44,89 @@ export default function AreasPage() {
   const userLocation = useAppSelector((state) => state.app.userLocation);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
+  // Helper to fetch live actual nearby areas/estates/streets from OpenStreetMap Nominatim Bounding Box API
+  const fetchLiveNearbyAreas = useCallback(async (lat: number, lon: number, currentAreas: typeof areas) => {
+    try {
+      const minLat = lat - 0.015;
+      const maxLat = lat + 0.015;
+      const minLon = lon - 0.015;
+      const maxLon = lon + 0.015;
+
+      const osmUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&viewbox=${minLon},${maxLat},${maxLon},${minLat}&bounded=1&q=street+estate+market+school+plaza+hospital+mall&limit=8`;
+      
+      const osmResponse = await fetch(osmUrl, {
+        headers: {
+          "User-Agent": "LytPulse/1.0"
+        }
+      });
+
+      if (osmResponse.ok) {
+        const osmData = await osmResponse.json();
+        
+        if (Array.isArray(osmData) && osmData.length > 0) {
+          interface OSMPlaceItem {
+            place_id: number;
+            name?: string;
+            display_name: string;
+            lat: string;
+            lon: string;
+          }
+
+          const liveAreas = osmData.map((item: OSMPlaceItem) => {
+            const displayNameParts = item.display_name.split(",");
+            const name = item.name || displayNameParts[0];
+            const desc = displayNameParts.slice(1, 4).join(",").trim() || "Lagos, Nigeria";
+            
+            return {
+              id: `live-${item.place_id}`,
+              name: name,
+              slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+              lat: parseFloat(item.lat),
+              lng: parseFloat(item.lon),
+              description: desc,
+              region: "Near You (GPS Live)"
+            };
+          });
+
+          // Dispatch live actual areas to Redux
+          dispatch(addLiveAreas(liveAreas));
+
+          // Compute closest area from combined list
+          const combined = [...currentAreas, ...liveAreas];
+          let closestArea = combined[0];
+          let minDistance = Infinity;
+
+          combined.forEach((area) => {
+            const dist = getHaversineDistance(lat, lon, area.lat, area.lng);
+            if (dist < minDistance) {
+              minDistance = dist;
+              closestArea = area;
+            }
+          });
+
+          dispatch(setDetectedAreaId(closestArea.id));
+          return;
+        }
+      }
+    } catch (osmError) {
+      console.error("OSM Bounding Box search failed:", osmError);
+    }
+
+    // Fallback: search closest within current static areas
+    let closestArea = currentAreas[0];
+    let minDistance = Infinity;
+
+    currentAreas.forEach((area) => {
+      const dist = getHaversineDistance(lat, lon, area.lat, area.lng);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestArea = area;
+      }
+    });
+
+    dispatch(setDetectedAreaId(closestArea.id));
+  }, [dispatch]);
+
   // Active silent location synchronization on page load to populate "Near You" section automatically
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
@@ -57,20 +141,8 @@ export default function AreasPage() {
           // Set location coordinate globals
           dispatch(setUserLocation(coords));
 
-          // Find mathematically closest seeded LGA
-          let closestArea = areas[0];
-          let minDistance = Infinity;
-
-          areas.forEach((area) => {
-            const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestArea = area;
-            }
-          });
-
-          // Trigger dynamic focus selection silently
-          dispatch(setDetectedAreaId(closestArea.id));
+          // Fetch live actual nearby areas and focus closest
+          fetchLiveNearbyAreas(latitude, longitude, areas);
         },
         (error) => {
           // If denied or timed out, default to Yaba fallback coordinates silently
@@ -86,7 +158,7 @@ export default function AreasPage() {
         }
       );
     }
-  }, [userLocation, areas, dispatch]);
+  }, [userLocation, areas, dispatch, fetchLiveNearbyAreas]);
 
   // Real GPS Location detection using Geolocation and Nominatim APIs
   const handleDetectLocation = () => {
@@ -107,20 +179,8 @@ export default function AreasPage() {
         // Store globally in Redux
         dispatch(setUserLocation(coords));
 
-        // Compute distances and find closest area
-        let closestArea = areas[0];
-        let minDistance = Infinity;
-
-        areas.forEach((area) => {
-          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestArea = area;
-          }
-        });
-
-        // Trigger dynamic selection
-        dispatch(setDetectedAreaId(closestArea.id));
+        // Fetch live actual nearby areas and focus closest
+        await fetchLiveNearbyAreas(latitude, longitude, areas);
 
         // Dismiss loading toast
         toast.dismiss(toastId);
@@ -140,7 +200,7 @@ export default function AreasPage() {
             const address = data.address || {};
             const lgaName = address.county || address.city_district || address.suburb || address.neighbourhood || "Lagos";
             
-            toast.success(`GPS Located near ${lgaName}! Closest neighborhood: ${closestArea.name}.`, {
+            toast.success(`GPS Located near ${lgaName}!`, {
               icon: "📍",
               duration: 4000
             });
@@ -148,7 +208,7 @@ export default function AreasPage() {
             throw new Error("Nominatim reverse geocoding failed");
           }
         } catch {
-          toast.success(`GPS Located! Nearest area set as ${closestArea.name} (${minDistance.toFixed(1)} km away).`, {
+          toast.success("GPS Located!", {
             icon: "📍",
             duration: 4000
           });
@@ -233,11 +293,11 @@ export default function AreasPage() {
           distance,
           timeAgo: a.timeAgo || "Updated just now",
           customInfo: `${distance.toFixed(1)} km away`,
-          avatars: a.name === "Yaba" ? [
+          avatars: a.name === "Yaba Tech" ? [
             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop",
             "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=50&h=50&fit=crop"
           ] : [],
-          avatarExtra: a.name === "Yaba" ? "+12" : ""
+          avatarExtra: a.name === "Yaba Tech" ? "+12" : ""
         };
       });
 
@@ -245,13 +305,13 @@ export default function AreasPage() {
       return areasWithDist.sort((a, b) => a.distance - b.distance).slice(0, 3);
     }
 
-    // Return hardcoded Yaba, Surulere, Iwaya for Design 1 fidelity when location not loaded
-    const targets = ["Yaba", "Surulere", "Iwaya"];
+    // Return hardcoded Yaba Tech, Adeniran Ogunsanya, Akoka Finbarrs for Design 1 fidelity when location not loaded
+    const targets = ["Yaba Tech", "Adeniran Ogunsanya", "Akoka Finbarrs"];
     const baseList = areasWithStatus.filter(a => targets.includes(a.name));
 
     // Add realistic visual mockup overrides if data is fresh
     return baseList.map(a => {
-      if (a.name === "Yaba") {
+      if (a.name === "Yaba Tech") {
         return {
           ...a,
           timeAgo: "Updated 2m ago",
@@ -265,7 +325,7 @@ export default function AreasPage() {
           distance: 0.5
         };
       }
-      if (a.name === "Surulere") {
+      if (a.name === "Adeniran Ogunsanya") {
         return {
           ...a,
           timeAgo: "Updated 8m ago",
@@ -277,7 +337,7 @@ export default function AreasPage() {
           distance: 2.1
         };
       }
-      // Iwaya
+      // Akoka Finbarrs
       return {
         ...a,
         timeAgo: "Updated 15m ago",

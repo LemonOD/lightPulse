@@ -6,7 +6,6 @@ import { Map, Zap } from "lucide-react";
 export default function MapPreview() {
   return (
     <>
-      {/* MOBILE MAP PREVIEW (Clean dark grid teaser card exactly as user configured) */}
       <Link
         href="/map"
         className="flex md:hidden relative h-32 w-full rounded-2xl overflow-hidden items-center justify-center group border-0 shadow-md transition-all duration-300 hover:scale-[1.01] cursor-pointer"
@@ -30,24 +29,19 @@ export default function MapPreview() {
         </div>
       </Link>
 
-      {/* DESKTOP MAP PREVIEW (Beautiful two-part Lagos vector map card with status table, exactly matching screenshot) */}
-      <div className="hidden md:flex flex-col w-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+     <div className="hidden md:flex flex-col w-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300">
         
-        {/* Top Half: Light Stylized Lagos Map Backdrop */}
         <Link
           href="/map"
           className="relative h-44 w-full bg-[#e8f1f7] overflow-hidden flex items-end p-5 group cursor-pointer border-b border-slate-100"
         >
-          {/* Stylized vector map graphics */}
           <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-103">
             
-            {/* Water Lagoons / Oceans */}
             <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 320 176">
               <path d="M 0 140 Q 120 120 180 150 T 320 110 L 320 176 L 0 176 Z" fill="#cbe2f4" />
               <path d="M 220 0 Q 250 40 320 30 L 320 0 Z" fill="#cbe2f4" />
             </svg>
 
-            {/* Road networks */}
             <svg className="absolute inset-0 h-full w-full stroke-white/80 fill-none stroke-[2.5]" viewBox="0 0 320 176">
               <path d="M-10 70 C80 70 120 30 200 50 C280 70 240 120 330 90" />
               <path d="M120 0 C140 50 100 90 170 176" />
@@ -55,7 +49,6 @@ export default function MapPreview() {
               <path d="M0 110 C160 110 160 30 320 30" />
             </svg>
 
-            {/* Secondary minor roads */}
             <svg className="absolute inset-0 h-full w-full stroke-slate-200/50 fill-none stroke-[1.2]" viewBox="0 0 320 176">
               <path d="M 30 0 L 30 176" />
               <path d="M 260 0 L 260 176" />
@@ -63,21 +56,17 @@ export default function MapPreview() {
               <path d="M 0 130 L 320 130" />
             </svg>
 
-            {/* Dynamic Status indicators pins */}
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full text-[10px] font-bold">
-              {/* Ojodu Berger */}
               <div className="absolute top-4 right-14 flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 border border-white" />
                 <span className="text-[7px] text-slate-400 font-extrabold uppercase">Ojodu Berger</span>
               </div>
               
-              {/* Agege */}
               <div className="absolute top-10 left-6 flex flex-col items-start leading-none">
                 <span className="text-slate-800 font-extrabold text-[11px] tracking-tight">Agege</span>
                 <span className="h-2 w-2 rounded-full bg-emerald-500 border border-white mt-1" />
               </div>
 
-              {/* Ikeja Grid center */}
               <div className="absolute top-14 right-20 flex flex-col items-center">
                 <span className="text-slate-800 font-black text-xs tracking-tight leading-none">Ikeja</span>
                 <span className="text-[7px] text-slate-400 font-extrabold uppercase mt-0.5">Lagos</span>
@@ -86,7 +75,6 @@ export default function MapPreview() {
                 </span>
               </div>
 
-              {/* Maryland */}
               <div className="absolute bottom-10 right-8 flex items-center gap-1">
                 <span className="h-2 w-2 rounded-full bg-amber-500 border border-white" />
                 <span className="text-[7px] text-slate-400 font-extrabold uppercase">Maryland</span>
@@ -95,10 +83,8 @@ export default function MapPreview() {
 
           </div>
 
-          {/* Overlay Hover glass layer */}
           <div className="absolute inset-0 bg-slate-900/10 transition-colors duration-300 group-hover:bg-slate-900/0" />
 
-          {/* Overlay Text Details matching mockup */}
           <div className="absolute bottom-4 left-5 z-10 flex flex-col gap-0.5 text-left">
             <span className="text-sm font-extrabold text-white tracking-tight leading-none drop-shadow-sm">
               Neighborhood View

@@ -6,7 +6,6 @@ import { Area, ReportStatus } from "@/lib/mockData";
 import { setSelectedAreaId } from "@/store/slices/appSlice";
 import { useAppDispatch } from "@/store";
 
-// Extended global declare to bypass missing type issues
 declare global {
   interface Window {
     google: any;
@@ -65,7 +64,6 @@ export default function GoogleMapImpl({
     document.head.appendChild(script);
   }, [apiKey]);
 
-  // Visual marker HTML structure matching Leaflet DivIcon exactly
   const getMarkerHtml = (status: ReportStatus, name: string) => {
     const colorMap = {
       stable: "#22c55e",
@@ -76,7 +74,6 @@ export default function GoogleMapImpl({
     
     const iconColor = colorMap[status] || colorMap.unknown;
     
-    // Status custom vector marks matching mockups
     const svgMarkup = status === "stable" 
       ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width: 18px; height: 18px;"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
       : status === "outage"
@@ -97,7 +94,6 @@ export default function GoogleMapImpl({
             </div>`;
   };
 
-  // Popup InfoWindow HTML markup matching Leaflet popups precisely
   const getPopupHtml = (area: Area & { status: ReportStatus }) => {
     const statusColor = area.status === "stable" ? "bg-emerald-500" :
                         area.status === "outage" ? "bg-red-500" :
@@ -123,17 +119,15 @@ export default function GoogleMapImpl({
             </div>`;
   };
 
-  // Initialize main map instance
   useEffect(() => {
     if (!loaded || !mapRef.current || mapInstanceRef.current) return;
 
     const google = window.google;
     
-    // Create map instance centered on Lagos (Yaba area)
     const map = new google.maps.Map(mapRef.current, {
       center: { lat: 6.5095, lng: 3.3711 },
       zoom: 13,
-      mapTypeId: google.maps.MapTypeId.HYBRID, // Satellite Hybrid mode matches Leaflet default base
+      mapTypeId: google.maps.MapTypeId.HYBRID,
       mapTypeControl: true,
       mapTypeControlOptions: {
         style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
@@ -157,14 +151,12 @@ export default function GoogleMapImpl({
     mapInstanceRef.current = map;
   }, [loaded]);
 
-  // Render & clear custom overlay markers (Leak-free lifecycle)
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !loaded) return;
 
     const google = window.google;
 
-    // Subclass Google Maps OverlayView dynamically to render standard custom HTML marker templates
     class CustomHTMLOverlay extends google.maps.OverlayView {
       latlng: any;
       html: string;
@@ -204,7 +196,6 @@ export default function GoogleMapImpl({
 
         const position = overlayProjection.fromLatLngToDivPixel(this.latlng);
         if (position) {
-          // Horizontal centering (width is 80px -> half is 40) and vertical shift anchoring (height is 60px -> half is 30)
           this.div.style.left = (position.x - 40) + "px";
           this.div.style.top = (position.y - 30) + "px";
         }
@@ -248,7 +239,6 @@ export default function GoogleMapImpl({
 
         const position = overlayProjection.fromLatLngToDivPixel(this.latlng);
         if (position) {
-          // Pulsing dot is 24px wide -> anchor to half (12px)
           this.div.style.left = (position.x - 12) + "px";
           this.div.style.top = (position.y - 12) + "px";
         }
@@ -262,17 +252,14 @@ export default function GoogleMapImpl({
       }
     }
 
-    // 1. Clear previous markers
     markersRef.current.forEach((marker) => marker.setMap(null));
     markersRef.current = [];
 
-    // 2. Clear previous user GPS overlay
     if (userOverlayRef.current) {
       userOverlayRef.current.setMap(null);
       userOverlayRef.current = null;
     }
 
-    // 3. Render Area markers
     areas.forEach((area) => {
       const latlng = new google.maps.LatLng(area.lat, area.lng);
       const markerHtml = getMarkerHtml(area.status, area.name);
@@ -289,7 +276,6 @@ export default function GoogleMapImpl({
       markersRef.current.push(overlay);
     });
 
-    // 4. Render user location pulsing overlay
     if (userLocation) {
       const userLatLng = new google.maps.LatLng(userLocation[0], userLocation[1]);
       const pulsingHtml = `<div class="relative flex items-center justify-center h-6 w-6">
@@ -302,7 +288,6 @@ export default function GoogleMapImpl({
     }
   }, [areas, userLocation, loaded, dispatch]);
 
-  // Sync camera position and open custom InfoWindows on selectedAreaId/userLocation updates
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !loaded) return;
@@ -318,7 +303,6 @@ export default function GoogleMapImpl({
         map.panTo({ lat: target.lat, lng: target.lng });
         map.setZoom(15);
 
-        // Render matching Popup bubble overlay
         if (infoWindowRef.current) {
           infoWindowRef.current.close();
         }

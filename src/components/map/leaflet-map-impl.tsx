@@ -14,7 +14,6 @@ interface LeafletMapProps {
   centerOnUser?: boolean;
 }
 
-// Controller component to pan/zoom when selectedAreaId or userLocation changes
 function MapController({
   selectedAreaId,
   areas,
@@ -56,10 +55,8 @@ export default function LeafletMapImpl({
 }: LeafletMapProps) {
   const dispatch = useAppDispatch();
 
-  // Lagos default coordinates center
   const centerPosition: [number, number] = [6.5095, 3.3711];
 
-  // Custom User Location pulsing radar icon
   const userLocationIcon = L.divIcon({
     html: `<div class="relative flex items-center justify-center h-6 w-6">
              <span class="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75 animate-ping"></span>
@@ -70,7 +67,6 @@ export default function LeafletMapImpl({
     iconAnchor: [12, 12]
   });
 
-  // Helper to compile dynamic premium HTML DivIcons for each status
   const getMarkerIcon = (status: ReportStatus, name: string) => {
     const colorMap = {
       stable: "#22c55e",
@@ -81,7 +77,6 @@ export default function LeafletMapImpl({
     
     const iconColor = colorMap[status] || colorMap.unknown;
     
-    // Status custom vector marks matching mockups
     const svgMarkup = status === "stable" 
       ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" class="h-4.5 w-4.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
       : status === "outage"
@@ -90,7 +85,6 @@ export default function LeafletMapImpl({
       ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
       : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="h-4.5 w-4.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
 
-    // Format Sabo, Ojuelegba, Akoka names for perfect mockup matching
     const cleanName = name === "Yaba Central" ? "YABA TECH" : name.toUpperCase();
 
     return L.divIcon({
@@ -119,7 +113,6 @@ export default function LeafletMapImpl({
         scrollWheelZoom={true}
       >
         <LayersControl position="topright">
-          {/* Default Layer: Hybrid Satellite Map showing streets, estates, and labels */}
           <LayersControl.BaseLayer checked name="Satellite Hybrid">
             <>
               <TileLayer
@@ -140,7 +133,6 @@ export default function LeafletMapImpl({
             </>
           </LayersControl.BaseLayer>
 
-          {/* Pure Satellite Imagery Layer */}
           <LayersControl.BaseLayer name="Satellite Imagery">
             <TileLayer
               attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
@@ -149,7 +141,6 @@ export default function LeafletMapImpl({
             />
           </LayersControl.BaseLayer>
 
-          {/* Clean Voyager Vector Layer */}
           <LayersControl.BaseLayer name="Vector Street Map">
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -159,7 +150,6 @@ export default function LeafletMapImpl({
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        {/* Pulsing User Geolocation Marker */}
         {userLocation && (
           <Marker position={userLocation} icon={userLocationIcon}>
             <Popup>
@@ -175,7 +165,6 @@ export default function LeafletMapImpl({
           </Marker>
         )}
 
-        {/* Dynamic Interactive Markers */}
         {areas.map((area) => (
           <Marker
             key={area.id}
@@ -210,7 +199,6 @@ export default function LeafletMapImpl({
           </Marker>
         ))}
 
-        {/* Map Pan / Zoom active controller */}
         <MapController
           selectedAreaId={selectedAreaId}
           areas={areas}

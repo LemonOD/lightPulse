@@ -31,7 +31,6 @@ export default function NearYouCard({
 }: NearYouCardProps) {
   return (
     <>
-      {/* 1. Desktop View Card (hidden on mobile, fully untouched layout-wise) */}
       <div
         onClick={onSelect}
         className={`hidden md:flex rounded-xl border p-6 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between min-h-[140px] ${
@@ -40,7 +39,6 @@ export default function NearYouCard({
             : "bg-white/70 border-slate-200 hover:border-slate-200"
         }`}
       >
-        {/* Header Title and Status Badge */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col text-left">
             <span className="text-base font-bold text-slate-800 tracking-tight">
@@ -60,7 +58,6 @@ export default function NearYouCard({
           </div>
         </div>
 
-        {/* Body metadata / Avatar stack */}
         <div className="flex items-center justify-between gap-4 mt-6 border-t border-slate-50 pt-3">
           <div className="flex items-center gap-2">
             {area.avatars && area.avatars.length > 0 ? (
@@ -97,7 +94,6 @@ export default function NearYouCard({
         </div>
       </div>
 
-      {/* 2. Mobile View Card (hidden on desktop, matches mockup with circle indicators) */}
       <div
         onClick={onSelect}
         className={`md:hidden rounded-2xl border border-slate-200 bg-white p-5 flex items-center justify-between cursor-pointer transition-all duration-200 active:scale-98 ${
@@ -121,7 +117,6 @@ export default function NearYouCard({
           </span>
         </div>
         
-        {/* Round Right Circle Badge with White Icon */}
         <StatusIcon status={area.status} />
       </div>
     </>

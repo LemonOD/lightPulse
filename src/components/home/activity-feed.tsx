@@ -3,8 +3,8 @@
 import { useAppDispatch, useAppSelector } from "@/store";
 import { confirmReportThunk } from "@/store/slices/dataSlice";
 import { Check, MessageSquare, RotateCw, Zap, ZapOff, AlertTriangle, HelpCircle, ThumbsUp } from "lucide-react";
-import { useMemo, useState } from "react";
-
+import { useMemo, useState, useEffect } from "react";
+import { getClientUserId } from "@/lib/db";
 import { toast } from "react-hot-toast";
 
 export default function ActivityFeed() {
@@ -15,6 +15,11 @@ export default function ActivityFeed() {
 
   const [visibleCount, setVisibleCount] = useState(3);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
+
+  useEffect(() => {
+    setCurrentUserId(getClientUserId());
+  }, []);
 
   const activeArea = areas.find(a => a.id === selectedAreaId) || areas[0] || { name: "Yaba" };
 
@@ -109,6 +114,7 @@ export default function ActivityFeed() {
         {sortedReports.slice(0, visibleCount).map((report) => {
           const iconSettings = getStatusIconSettings(report.status);
           const StatusIcon = iconSettings.icon;
+          const isAuthor = report.user_id === currentUserId;
 
           return (
             <div
@@ -146,13 +152,21 @@ export default function ActivityFeed() {
               {/* Right Side: Thumbs-Up Confirm outline button */}
               <button
                 onClick={(e) => handleConfirm(report.id, e)}
-                disabled={report.has_confirmed}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all duration-200 ${report.has_confirmed
+                disabled={report.has_confirmed || isAuthor}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all duration-200 ${
+                  isAuthor
+                    ? "bg-slate-50 text-slate-400 border-slate-200 cursor-default"
+                    : report.has_confirmed
                     ? "bg-emerald-500 text-white border-emerald-500 cursor-default"
                     : "bg-white text-slate-600 border-slate-200 cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600 active:scale-95"
-                  }`}
+                }`}
               >
-                {report.has_confirmed ? (
+                {isAuthor ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                    <span>Your Report</span>
+                  </>
+                ) : report.has_confirmed ? (
                   <>
                     <Check className="h-3.5 w-3.5 stroke-[2.5]" />
                     <span>Confirmed</span>

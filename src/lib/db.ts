@@ -10,6 +10,16 @@ export interface IDatabaseService {
 }
 
 // Local Storage / In-Memory Mock Implementation
+export function getClientUserId(): string {
+  if (typeof window === "undefined") return "server-user";
+  let userId = localStorage.getItem("lytpulse_user_id");
+  if (!userId) {
+    userId = `usr-${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem("lytpulse_user_id", userId);
+  }
+  return userId;
+}
+
 class MockDatabaseService implements IDatabaseService {
   private getStorageItem<T>(key: string, defaultValue: T): T {
     if (typeof window === "undefined") return defaultValue;
@@ -51,6 +61,7 @@ class MockDatabaseService implements IDatabaseService {
     const reports = this.getStorageItem<Report[]>("lytpulse_reports", INITIAL_REPORTS);
     const newReport: Report = {
       ...newReportData,
+      user_id: newReportData.user_id || getClientUserId(),
       id: `rep-${Math.random().toString(36).substr(2, 9)}`,
       created_at: new Date().toISOString(),
       confirmations_count: 0,
@@ -67,12 +78,32 @@ class MockDatabaseService implements IDatabaseService {
     const reportIndex = reports.findIndex(r => r.id === reportId);
     
     if (reportIndex !== -1) {
-      if (!reports[reportIndex].has_confirmed) {
-        reports[reportIndex].confirmations_count += 1;
-        reports[reportIndex].has_confirmed = true;
+      const confirmedReport = reports[reportIndex];
+      
+      // Enforce: Reporter cannot confirm their own report
+      if (confirmedReport.user_id === getClientUserId()) {
+        return confirmedReport.confirmations_count;
+      }
+      
+      if (!confirmedReport.has_confirmed) {
+        confirmedReport.confirmations_count += 1;
+        confirmedReport.has_confirmed = true;
+        
+        // Synchronize all similar reports in the same neighborhood showing the same status
+        reports.forEach((r) => {
+          if (
+            r.id !== confirmedReport.id && 
+            r.area_id === confirmedReport.area_id && 
+            r.status === confirmedReport.status
+          ) {
+            r.confirmations_count += 1;
+            r.has_confirmed = true;
+          }
+        });
+
         this.setStorageItem("lytpulse_reports", reports);
       }
-      return reports[reportIndex].confirmations_count;
+      return confirmedReport.confirmations_count;
     }
     return 0;
   }

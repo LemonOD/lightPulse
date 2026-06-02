@@ -98,10 +98,25 @@ const dataSlice = createSlice({
       
       // Confirm report
       .addCase(confirmReportThunk.fulfilled, (state, action) => {
-        const report = state.reports.find(r => r.id === action.payload.reportId);
-        if (report) {
-          report.confirmations_count = action.payload.count;
-          report.has_confirmed = true;
+        const confirmedReport = state.reports.find(r => r.id === action.payload.reportId);
+        if (confirmedReport) {
+          const wasConfirmed = confirmedReport.has_confirmed;
+          confirmedReport.confirmations_count = action.payload.count;
+          confirmedReport.has_confirmed = true;
+
+          // If this is a fresh confirmation click, synchronize all matching local reports
+          if (!wasConfirmed) {
+            state.reports.forEach((r) => {
+              if (
+                r.id !== confirmedReport.id && 
+                r.area_id === confirmedReport.area_id && 
+                r.status === confirmedReport.status
+              ) {
+                r.confirmations_count += 1;
+                r.has_confirmed = true;
+              }
+            });
+          }
         }
       });
   }

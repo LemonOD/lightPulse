@@ -7,23 +7,11 @@ import { GeocodedPlace } from "@/components/shared/address-autocomplete";
 import { getAreaStatusFromReports } from "@/lib/db";
 import { X } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
 
-// Helper utility to calculate physical distance in kilometers using the Haversine formula
-const getHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
+// Helper utility (already defined in @/lib/geolocation but imported/bound here)
 
 // Custom Subcomponents
 import MapSidebar from "@/components/map/map-sidebar";
@@ -61,6 +49,51 @@ export default function MapPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLegendMobile, setShowLegendMobile] = useState(false);
   const [centerOnUser, setCenterOnUser] = useState(false);
+
+  // Automatic geolocator on map load to instantly focus user context
+  useEffect(() => {
+    if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
+
+    getPreciseLocation({
+      enableHighAccuracy: true,
+      timeout: 8000,
+      maximumAge: 120000, // 2 minutes cache is fine
+      fallbackToLowAccuracy: true
+    })
+      .then(async ([latitude, longitude]) => {
+        const coords: [number, number] = [latitude, longitude];
+
+        // Store location coordinates globally in Redux
+        dispatch(setUserLocation(coords));
+        setCenterOnUser(true);
+
+        // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
+        const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
+        if (liveAreas.length > 0) {
+          dispatch(addLiveAreas(liveAreas));
+        }
+
+        // Compute closest area from combined list
+        const combined = [...areas, ...liveAreas];
+        let closestArea = combined[0] || areas[0];
+        let minDistance = Infinity;
+
+        combined.forEach((area) => {
+          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestArea = area;
+          }
+        });
+
+        // Focus and center Leaflet/Google map
+        dispatch(setSelectedAreaId(closestArea.id));
+      })
+      .catch((err) => {
+        console.log("Auto-mount geolocator skipped or unauthorized on map page:", err);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areas, dispatch]);
 
   // Compute areas with their live status metrics
   const areasWithStatus = useMemo(() => {
@@ -151,20 +184,31 @@ export default function MapPage() {
 
     const toastId = toast.loading("Pinging GPS satellites...");
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
+    getPreciseLocation({
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+      fallbackToLowAccuracy: true
+    })
+      .then(async ([latitude, longitude]) => {
         const coords: [number, number] = [latitude, longitude];
 
         // Store globally in Redux
         dispatch(setUserLocation(coords));
         setCenterOnUser(true);
 
-        // Compute distances and find closest area
-        let closestArea = areas[0];
+        // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
+        const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
+        if (liveAreas.length > 0) {
+          dispatch(addLiveAreas(liveAreas));
+        }
+
+        // Compute distances and find closest area from combined list
+        const combined = [...areas, ...liveAreas];
+        let closestArea = combined[0] || areas[0];
         let minDistance = Infinity;
 
-        areas.forEach((area) => {
+        combined.forEach((area) => {
           const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
           if (dist < minDistance) {
             minDistance = dist;
@@ -178,38 +222,22 @@ export default function MapPage() {
         // Dismiss loading toast
         toast.dismiss(toastId);
 
-        // Attempt reverse geocoding via Nominatim API (with standard graceful fallback)
+        // Smart hybrid reverse geocoding (uses Google client Geocoder if active)
         try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
-            {
-              headers: {
-                "User-Agent": "LytPulse/1.0"
-              }
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            const address = data.address || {};
-            // LGA name is typically in 'county', 'city_district', 'suburb', or 'city'
-            const lgaName = address.county || address.city_district || address.suburb || address.neighbourhood || "Lagos";
-            
-            toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
-              icon: "📍",
-              duration: 4000
-            });
-          } else {
-            throw new Error("Nominatim API request failed");
-          }
-        } catch {
-          // Graceful fallback showing nearest mathematically calculated neighborhood
+          const lgaName = await reverseGeocodeCoordinates(latitude, longitude);
+          toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
+            icon: "📍",
+            duration: 4000
+          });
+        } catch (geocodeErr) {
+          console.warn("Reverse geocode failed:", geocodeErr);
           toast.success(`GPS Calibrated! Centered on closest area: ${closestArea.name} (${minDistance.toFixed(1)} km away).`, {
             icon: "📍",
             duration: 4000
           });
         }
-      },
-      (error) => {
+      })
+      .catch((error) => {
         toast.dismiss(toastId);
         console.error("Geolocation error:", error);
 
@@ -228,13 +256,7 @@ export default function MapPage() {
             icon: "📡",
           });
         }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
+      });
   };
 
   const handleOpenReportModal = () => {

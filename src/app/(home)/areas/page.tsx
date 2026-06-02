@@ -9,27 +9,13 @@ import { Map as MapIcon } from "lucide-react";
 import { getAreaStatusFromReports } from "@/lib/db";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
+import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
 
 // Custom Subcomponents
 import AreasHeader from "@/components/areas/areas-header";
 import NearYouGrid from "@/components/areas/near-you-grid";
 import AllAreasDirectory from "@/components/areas/all-areas-directory";
 import MobileLocationButton from "@/components/areas/mobile-location-button";
-
-// Helper utility to calculate physical distance in kilometers using the Haversine formula
-const getHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) *
-    Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
 
 export default function AreasPage() {
   const dispatch = useAppDispatch();
@@ -46,77 +32,19 @@ export default function AreasPage() {
 
   // Helper to fetch live actual nearby areas/estates/streets from OpenStreetMap Nominatim Bounding Box API
   const fetchLiveNearbyAreas = useCallback(async (lat: number, lon: number, currentAreas: typeof areas) => {
-    try {
-      const minLat = lat - 0.015;
-      const maxLat = lat + 0.015;
-      const minLon = lon - 0.015;
-      const maxLon = lon + 0.015;
-
-      const osmUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&viewbox=${minLon},${maxLat},${maxLon},${minLat}&bounded=1&q=street+estate+market+school+plaza+hospital+mall&limit=8`;
-      
-      const osmResponse = await fetch(osmUrl, {
-        headers: {
-          "User-Agent": "LytPulse/1.0"
-        }
-      });
-
-      if (osmResponse.ok) {
-        const osmData = await osmResponse.json();
-        
-        if (Array.isArray(osmData) && osmData.length > 0) {
-          interface OSMPlaceItem {
-            place_id: number;
-            name?: string;
-            display_name: string;
-            lat: string;
-            lon: string;
-          }
-
-          const liveAreas = osmData.map((item: OSMPlaceItem) => {
-            const displayNameParts = item.display_name.split(",");
-            const name = item.name || displayNameParts[0];
-            const desc = displayNameParts.slice(1, 4).join(",").trim() || "Lagos, Nigeria";
-            
-            return {
-              id: `live-${item.place_id}`,
-              name: name,
-              slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-              lat: parseFloat(item.lat),
-              lng: parseFloat(item.lon),
-              description: desc,
-              region: "Near You (GPS Live)"
-            };
-          });
-
-          // Dispatch live actual areas to Redux
-          dispatch(addLiveAreas(liveAreas));
-
-          // Compute closest area from combined list
-          const combined = [...currentAreas, ...liveAreas];
-          let closestArea = combined[0];
-          let minDistance = Infinity;
-
-          combined.forEach((area) => {
-            const dist = getHaversineDistance(lat, lon, area.lat, area.lng);
-            if (dist < minDistance) {
-              minDistance = dist;
-              closestArea = area;
-            }
-          });
-
-          dispatch(setDetectedAreaId(closestArea.id));
-          return;
-        }
-      }
-    } catch (osmError) {
-      console.error("OSM Bounding Box search failed:", osmError);
+    const liveAreas = await fetchLiveNearbyAreasFromOSM(lat, lon);
+    
+    if (liveAreas.length > 0) {
+      // Dispatch live actual areas to Redux
+      dispatch(addLiveAreas(liveAreas));
     }
 
-    // Fallback: search closest within current static areas
-    let closestArea = currentAreas[0];
+    // Compute closest area from combined list
+    const combined = [...currentAreas, ...liveAreas];
+    let closestArea = combined[0];
     let minDistance = Infinity;
 
-    currentAreas.forEach((area) => {
+    combined.forEach((area) => {
       const dist = getHaversineDistance(lat, lon, area.lat, area.lng);
       if (dist < minDistance) {
         minDistance = dist;
@@ -127,38 +55,36 @@ export default function AreasPage() {
     dispatch(setDetectedAreaId(closestArea.id));
   }, [dispatch]);
 
-  // Active silent location synchronization on page load to populate "Near You" section automatically
+  // Active location synchronization on page load to populate "Near You" section automatically
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
 
-    // Only ping browser GPS if userLocation is not already set in Redux
-    if (!userLocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const coords: [number, number] = [latitude, longitude];
+    getPreciseLocation({
+      enableHighAccuracy: true,
+      timeout: 8000,
+      maximumAge: 60000, // 1 minute maximum age to guarantee fresh coordinates
+      fallbackToLowAccuracy: true
+    })
+      .then(([latitude, longitude]) => {
+        const coords: [number, number] = [latitude, longitude];
 
-          // Set location coordinate globals
-          dispatch(setUserLocation(coords));
+        // Set location coordinate globals
+        dispatch(setUserLocation(coords));
 
-          // Fetch live actual nearby areas and focus closest
-          fetchLiveNearbyAreas(latitude, longitude, areas);
-        },
-        (error) => {
-          // If denied or timed out, default to Yaba fallback coordinates silently
-          console.log("Silent mount location check skipped:", error);
+        // Fetch live actual nearby areas and focus closest
+        fetchLiveNearbyAreas(latitude, longitude, areas);
+      })
+      .catch((error) => {
+        // If denied or timed out, default to Yaba fallback coordinates silently
+        console.log("Silent mount location check failed:", error);
+        if (!userLocation) {
           const fallbackCoords: [number, number] = [6.5095, 3.3711];
           dispatch(setUserLocation(fallbackCoords));
           dispatch(setDetectedAreaId("area-1")); // Default Yaba
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 8000,
-          maximumAge: 3600000 // Cache for 1 hour to prevent redundant satellite checks
         }
-      );
-    }
-  }, [userLocation, areas, dispatch, fetchLiveNearbyAreas]);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [areas, dispatch]);
 
   // Real GPS Location detection using Geolocation and Nominatim APIs
   const handleDetectLocation = () => {
@@ -170,10 +96,14 @@ export default function AreasPage() {
     dispatch(setIsLocating(true));
     const toastId = toast.loading("Locating GPS satellites...");
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+    getPreciseLocation({
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0,
+      fallbackToLowAccuracy: true
+    })
+      .then(async ([latitude, longitude]) => {
         dispatch(setIsLocating(false));
-        const { latitude, longitude } = position.coords;
         const coords: [number, number] = [latitude, longitude];
 
         // Store globally in Redux
@@ -185,36 +115,22 @@ export default function AreasPage() {
         // Dismiss loading toast
         toast.dismiss(toastId);
 
-        // Attempt reverse geocoding via Nominatim API (with standard graceful fallback)
+        // Attempt reverse geocoding via smart client helper (Google-prioritized)
         try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
-            {
-              headers: {
-                "User-Agent": "LytPulse/1.0"
-              }
-            }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            const address = data.address || {};
-            const lgaName = address.county || address.city_district || address.suburb || address.neighbourhood || "Lagos";
-            
-            toast.success(`GPS Located near ${lgaName}!`, {
-              icon: "📍",
-              duration: 4000
-            });
-          } else {
-            throw new Error("Nominatim reverse geocoding failed");
-          }
-        } catch {
+          const lgaName = await reverseGeocodeCoordinates(latitude, longitude);
+          toast.success(`GPS Located near ${lgaName}!`, {
+            icon: "📍",
+            duration: 4000
+          });
+        } catch (geocodeErr) {
+          console.warn("Reverse geocode failed:", geocodeErr);
           toast.success("GPS Located!", {
             icon: "📍",
             duration: 4000
           });
         }
-      },
-      (error) => {
+      })
+      .catch((error) => {
         dispatch(setIsLocating(false));
         toast.dismiss(toastId);
         console.error("Geolocation error:", error);
@@ -233,13 +149,7 @@ export default function AreasPage() {
             icon: "📡",
           });
         }
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
-      }
-    );
+      });
   };
 
   const handleSelectArea = (areaId: string) => {

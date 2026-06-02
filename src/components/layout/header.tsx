@@ -6,21 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
 import { Zap, MapPin } from "lucide-react";
 import { useEffect } from "react";
-
-// Helper utility to calculate physical distance in kilometers using the Haversine formula
-const getHaversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-};
+import { getPreciseLocation, getHaversineDistance } from "@/lib/geolocation";
 
 export default function Header() {
   const pathname = usePathname();
@@ -33,9 +19,13 @@ export default function Header() {
   useEffect(() => {
     if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
+    getPreciseLocation({
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 120000, // 2 minutes cache
+      fallbackToLowAccuracy: true
+    })
+      .then(([latitude, longitude]) => {
         const coords: [number, number] = [latitude, longitude];
 
         // Store location coordinates globally
@@ -55,17 +45,11 @@ export default function Header() {
 
         // Set selected area to auto-calibrate header label
         dispatch(setSelectedAreaId(closestArea.id));
-      },
-      (err) => {
+      })
+      .catch((err) => {
         // Fail silently without disturbing UX on startup if geolocation not allowed yet
         console.log("Auto-mount geolocator skipped or unauthorized:", err);
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 6000,
-        maximumAge: Infinity // Use cached results to maximize load speeds
-      }
-    );
+      });
   }, [areas, dispatch]);
 
   // Dynamically resolve exact focused location name

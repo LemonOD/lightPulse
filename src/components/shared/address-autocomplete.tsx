@@ -125,7 +125,20 @@ export default function AddressAutocomplete({
             return;
           }
 
+          // If Google returned an API error status (e.g. REQUEST_DENIED, OVER_QUERY_LIMIT, etc.)
+          if (data.status && data.status !== "OK" && data.status !== "ZERO_RESULTS") {
+            console.warn(`Google Places API returned error status: ${data.status}. Falling back to OpenStreetMap Photon.`);
+            await fetchPhotonFallback();
+            return;
+          }
+
           if (data && Array.isArray(data.predictions)) {
+            // If predictions list is empty but status was not explicitly ZERO_RESULTS, try Photon as a backup
+            if (data.predictions.length === 0 && data.status !== "ZERO_RESULTS") {
+              await fetchPhotonFallback();
+              return;
+            }
+
             interface GooglePrediction {
               place_id: string;
               description: string;
@@ -257,6 +270,11 @@ export default function AddressAutocomplete({
         const res = await fetch(`/api/places/details?placeId=${place.id}`);
         if (res.ok) {
           const data = await res.json();
+          
+          if (data.error === "API_KEY_MISSING" || data.status === "REQUEST_DENIED") {
+            throw new Error(data.status || "Google Details API key missing");
+          }
+
           const geometry = data.result?.geometry;
           
           if (geometry && geometry.location) {
@@ -277,8 +295,39 @@ export default function AddressAutocomplete({
           throw new Error(`Google details responded with status ${res.status}`);
         }
       } catch (err) {
-        console.error("Failed to fetch Google Place details:", err);
-        // Direct fallback: set input query but notify user of geocoding failure
+        console.error("Failed to fetch Google Place details, trying Photon geocoder fallback:", err);
+        
+        // Try to geocode the selected Google place description via Photon
+        try {
+          const fallbackRes = await fetch(
+            `https://photon.komoot.io/api/?q=${encodeURIComponent(place.name + " " + place.description)}&limit=1`,
+            {
+              headers: {
+                "Accept-Language": "en"
+              }
+            }
+          );
+          if (fallbackRes.ok) {
+            const data = await fallbackRes.json();
+            if (data && Array.isArray(data.features) && data.features.length > 0) {
+              const feature = data.features[0];
+              const coords = feature.geometry.coordinates; // [lon, lat]
+              
+              onSelectPlace({
+                id: place.id,
+                name: place.name,
+                description: place.description,
+                lat: coords[1], // Latitude is coords[1] in GeoJSON
+                lng: coords[0]  // Longitude is coords[0] in GeoJSON
+              });
+              setQuery(place.name);
+              return;
+            }
+          }
+        } catch (photonErr) {
+          console.error("Photon geocoder fallback also failed:", photonErr);
+        }
+        
         setQuery(place.name);
       } finally {
         setIsLoading(false);

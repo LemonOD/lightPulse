@@ -10,7 +10,6 @@ export default function Home() {
   return (
     <main className="flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:py-10">
       
-      {/* Mobile Stack (exactly matching the user's mockup screenshot) */}
       <div className="flex flex-col gap-6 md:hidden">
         <StatusCard />
         <ReportForm />
@@ -31,10 +30,8 @@ export default function Home() {
         </div>
 
         <div className="flex flex-col gap-8">
-          {/* Neighborhood Leaflet map anchor preview */}
           <MapPreview />
           
-          {/* Dynamic real-time community report timeline */}
           <ActivityFeed />
         </div>
 

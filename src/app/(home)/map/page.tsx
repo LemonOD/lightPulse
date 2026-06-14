@@ -67,14 +67,32 @@ export default function MapPage() {
         dispatch(setUserLocation(coords));
         setCenterOnUser(true);
 
-        // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
-        const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
-        if (liveAreas.length > 0) {
-          dispatch(addLiveAreas(liveAreas));
+        // Smart hybrid reverse geocoding
+        let lgaName = "Your Exact Location";
+        try {
+          lgaName = await reverseGeocodeCoordinates(latitude, longitude);
+        } catch (e) {
+          console.warn("Reverse geocode failed", e);
         }
 
+        const myLocationArea = {
+          id: `custom-loc-gps`,
+          name: "My Current Location",
+          slug: "my-current-location",
+          lat: latitude,
+          lng: longitude,
+          description: lgaName,
+          region: "Custom Location",
+        };
+
+        // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
+        const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
+        
+        // Dispatch custom location and OSM locations
+        dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
+
         // Compute closest area from combined list
-        const combined = [...areas, ...liveAreas];
+        const combined = [...areas, myLocationArea, ...liveAreas];
         let closestArea = combined[0] || areas[0];
         let minDistance = Infinity;
 
@@ -193,18 +211,35 @@ export default function MapPage() {
       .then(async ([latitude, longitude]) => {
         const coords: [number, number] = [latitude, longitude];
 
+        // Smart hybrid reverse geocoding
+        let lgaName = "Your Exact Location";
+        try {
+          lgaName = await reverseGeocodeCoordinates(latitude, longitude);
+        } catch (geocodeErr) {
+          console.warn("Reverse geocode failed:", geocodeErr);
+        }
+
+        const myLocationArea = {
+          id: `custom-loc-gps`,
+          name: "My Current Location",
+          slug: "my-current-location",
+          lat: latitude,
+          lng: longitude,
+          description: lgaName,
+          region: "Custom Location",
+        };
+
         // Store globally in Redux
         dispatch(setUserLocation(coords));
         setCenterOnUser(true);
 
         // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
         const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
-        if (liveAreas.length > 0) {
-          dispatch(addLiveAreas(liveAreas));
-        }
+        
+        dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
 
         // Compute distances and find closest area from combined list
-        const combined = [...areas, ...liveAreas];
+        const combined = [...areas, myLocationArea, ...liveAreas];
         let closestArea = combined[0] || areas[0];
         let minDistance = Infinity;
 
@@ -222,20 +257,10 @@ export default function MapPage() {
         // Dismiss loading toast
         toast.dismiss(toastId);
 
-        // Smart hybrid reverse geocoding (uses Google client Geocoder if active)
-        try {
-          const lgaName = await reverseGeocodeCoordinates(latitude, longitude);
-          toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
-            icon: "📍",
-            duration: 4000
-          });
-        } catch (geocodeErr) {
-          console.warn("Reverse geocode failed:", geocodeErr);
-          toast.success(`GPS Calibrated! Centered on closest area: ${closestArea.name} (${minDistance.toFixed(1)} km away).`, {
-            icon: "📍",
-            duration: 4000
-          });
-        }
+        toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
+          icon: "📍",
+          duration: 4000
+        });
       })
       .catch((error) => {
         toast.dismiss(toastId);

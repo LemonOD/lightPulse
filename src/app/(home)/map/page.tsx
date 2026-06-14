@@ -425,6 +425,7 @@ export default function MapPage() {
         setComment={setComment}
         isSubmitting={isSubmitting}
         handleReportSubmit={handleReportSubmit}
+        userLocation={userLocation}
       />
 
     </main>

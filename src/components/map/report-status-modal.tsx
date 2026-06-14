@@ -2,6 +2,7 @@
 
 import { Zap, ZapOff, AlertTriangle, X } from "lucide-react";
 import { Area, ReportStatus } from "@/lib/mockData";
+import { getHaversineDistance } from "@/lib/geolocation";
 
 interface ReportStatusModalProps {
   showReportModal: boolean;
@@ -13,6 +14,7 @@ interface ReportStatusModalProps {
   setComment: (val: string) => void;
   isSubmitting: boolean;
   handleReportSubmit: (e: React.FormEvent) => void;
+  userLocation?: [number, number] | null;
 }
 
 const MODAL_STATUS_BUTTONS = [
@@ -49,8 +51,12 @@ export default function ReportStatusModal({
   setComment,
   isSubmitting,
   handleReportSubmit,
+  userLocation,
 }: ReportStatusModalProps) {
   if (!showReportModal || !activeArea) return null;
+
+  const distance = userLocation ? getHaversineDistance(userLocation[0], userLocation[1], activeArea.lat, activeArea.lng) : null;
+  const isTooFar = distance !== null && distance > 5;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -120,9 +126,16 @@ export default function ReportStatusModal({
             />
           </div>
 
+          {isTooFar ? (
+            <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-semibold border border-red-100 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              You are too far from this area to submit a status report.
+            </div>
+          ) : null}
+
           <button
             type="submit"
-            disabled={isSubmitting || !reportStatus}
+            disabled={isSubmitting || !reportStatus || isTooFar}
             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 mt-2 cursor-pointer"
           >
             <span>Submit Report</span>

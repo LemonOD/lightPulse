@@ -122,7 +122,7 @@ export default function ActivityFeed() {
           const distance = userLocation && reportArea 
             ? getHaversineDistance(userLocation[0], userLocation[1], reportArea.lat, reportArea.lng) 
             : null;
-          const isTooFar = distance !== null && distance > 5;
+          const isTooFar = distance !== null && distance > 3;
 
           return (
             <div
@@ -161,7 +161,7 @@ export default function ActivityFeed() {
               <button
                 onClick={(e) => handleConfirm(report.id, e)}
                 disabled={report.has_confirmed || isAuthor || isTooFar}
-                title={isTooFar ? "You are too far from this area to confirm" : undefined}
+                title={isTooFar ? "Too far (Must be within 3km)" : undefined}
                 className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all duration-200 ${
                   isAuthor || isTooFar
                     ? "bg-slate-50 text-slate-400 border-slate-200 cursor-default"

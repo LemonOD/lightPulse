@@ -7,6 +7,7 @@ export interface IDatabaseService {
   getReports(): Promise<Report[]>;
   createReport(report: Omit<Report, "id" | "created_at" | "confirmations_count">): Promise<Report>;
   confirmReport(reportId: string): Promise<number>;
+  saveCustomArea(area: Area): Promise<void>;
 }
 
 // Local Storage / In-Memory Mock Implementation
@@ -106,6 +107,17 @@ class MockDatabaseService implements IDatabaseService {
       return confirmedReport.confirmations_count;
     }
     return 0;
+  }
+
+  async saveCustomArea(area: Area): Promise<void> {
+    const areas = this.getStorageItem<Area[]>("lytpulse_areas", INITIAL_AREAS);
+    const existingIndex = areas.findIndex(a => a.id === area.id);
+    if (existingIndex !== -1) {
+      areas[existingIndex] = area;
+    } else {
+      areas.push(area);
+    }
+    this.setStorageItem("lytpulse_areas", areas);
   }
 }
 
@@ -234,6 +246,24 @@ class SupabaseDatabaseService implements IDatabaseService {
     }
 
     return count || 0;
+  }
+
+  async saveCustomArea(area: Area): Promise<void> {
+    const { error } = await supabase
+      .from("areas")
+      .upsert({
+        id: area.id,
+        name: area.name,
+        slug: area.slug,
+        lat: area.lat,
+        lng: area.lng,
+        region: area.region,
+        description: area.description
+      });
+
+    if (error) {
+      console.error("Failed to save custom area to Supabase:", error);
+    }
   }
 }
 

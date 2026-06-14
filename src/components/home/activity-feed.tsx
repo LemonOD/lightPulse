@@ -6,12 +6,14 @@ import { Check, MessageSquare, RotateCw, Zap, ZapOff, AlertTriangle, HelpCircle,
 import { useMemo, useState, useEffect } from "react";
 import { getClientUserId } from "@/lib/db";
 import { toast } from "react-hot-toast";
+import { getHaversineDistance } from "@/lib/geolocation";
 
 export default function ActivityFeed() {
   const dispatch = useAppDispatch();
   const reports = useAppSelector((state) => state.data.reports);
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
   const areas = useAppSelector((state) => state.data.areas);
+  const userLocation = useAppSelector((state) => state.app.userLocation);
 
   const [visibleCount, setVisibleCount] = useState(3);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -115,6 +117,12 @@ export default function ActivityFeed() {
           const iconSettings = getStatusIconSettings(report.status);
           const StatusIcon = iconSettings.icon;
           const isAuthor = report.user_id === currentUserId;
+          
+          const reportArea = areas.find((a) => a.id === report.area_id);
+          const distance = userLocation && reportArea 
+            ? getHaversineDistance(userLocation[0], userLocation[1], reportArea.lat, reportArea.lng) 
+            : null;
+          const isTooFar = distance !== null && distance > 3;
 
           return (
             <div
@@ -152,9 +160,10 @@ export default function ActivityFeed() {
               {/* Right Side: Thumbs-Up Confirm outline button */}
               <button
                 onClick={(e) => handleConfirm(report.id, e)}
-                disabled={report.has_confirmed || isAuthor}
+                disabled={report.has_confirmed || isAuthor || isTooFar}
+                title={isTooFar ? "Too far (Must be within 3km)" : undefined}
                 className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all duration-200 ${
-                  isAuthor
+                  isAuthor || isTooFar
                     ? "bg-slate-50 text-slate-400 border-slate-200 cursor-default"
                     : report.has_confirmed
                     ? "bg-emerald-500 text-white border-emerald-500 cursor-default"

@@ -2,6 +2,9 @@
 
 import { Zap, ZapOff, AlertTriangle, X } from "lucide-react";
 import { Area, ReportStatus } from "@/lib/mockData";
+import { getHaversineDistance } from "@/lib/geolocation";
+import { useState, useEffect } from "react";
+import { useAppDispatch } from "@/store";
 
 interface ReportStatusModalProps {
   showReportModal: boolean;
@@ -12,7 +15,8 @@ interface ReportStatusModalProps {
   comment: string;
   setComment: (val: string) => void;
   isSubmitting: boolean;
-  handleReportSubmit: (e: React.FormEvent) => void;
+  handleReportSubmit: (e: React.FormEvent, customName?: string) => void;
+  userLocation?: [number, number] | null;
 }
 
 const MODAL_STATUS_BUTTONS = [
@@ -49,8 +53,21 @@ export default function ReportStatusModal({
   setComment,
   isSubmitting,
   handleReportSubmit,
+  userLocation,
 }: ReportStatusModalProps) {
+  const dispatch = useAppDispatch();
+  const [customAreaName, setCustomAreaName] = useState("");
+
+  useEffect(() => {
+    if (activeArea?.id === "custom-loc-gps") {
+      setCustomAreaName(activeArea.name !== "My Current Location" ? activeArea.name : "");
+    }
+  }, [activeArea]);
+
   if (!showReportModal || !activeArea) return null;
+
+  const distance = userLocation ? getHaversineDistance(userLocation[0], userLocation[1], activeArea.lat, activeArea.lng) : null;
+  const isTooFar = distance !== null && distance > 3;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -77,7 +94,7 @@ export default function ReportStatusModal({
           </h3>
         </div>
 
-        <form onSubmit={handleReportSubmit} className="flex flex-col gap-5">
+        <form onSubmit={(e) => handleReportSubmit(e, activeArea.id === "custom-loc-gps" ? customAreaName : undefined)} className="flex flex-col gap-5">
           {/* Status Select Grid */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -106,6 +123,23 @@ export default function ReportStatusModal({
             </div>
           </div>
 
+          {activeArea.id === "custom-loc-gps" && (
+            <div className="flex flex-col gap-2 mb-1">
+              <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                Location Name (Optional)
+              </label>
+              <input
+                type="text"
+                value={customAreaName}
+                onChange={(e) => {
+                  setCustomAreaName(e.target.value);
+                }}
+                placeholder="e.g. Isiu Ikorodu"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-300 text-xs font-semibold text-slate-700"
+              />
+            </div>
+          )}
+
           {/* Comment text area */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -120,9 +154,16 @@ export default function ReportStatusModal({
             />
           </div>
 
+          {isTooFar ? (
+            <div className="bg-red-50 text-red-600 p-3 rounded-xl text-xs font-semibold border border-red-100 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              You are too far from this area to submit a status report.
+            </div>
+          ) : null}
+
           <button
             type="submit"
-            disabled={isSubmitting || !reportStatus}
+            disabled={isSubmitting || !reportStatus || isTooFar}
             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 mt-2 cursor-pointer"
           >
             <span>Submit Report</span>

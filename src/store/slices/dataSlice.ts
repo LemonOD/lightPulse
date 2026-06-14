@@ -62,6 +62,20 @@ export const confirmReportThunk = createAsyncThunk(
   }
 );
 
+export const saveCustomAreaThunk = createAsyncThunk(
+  "data/saveCustomArea",
+  async (area: Area, { rejectWithValue, dispatch }) => {
+    try {
+      await dbService.saveCustomArea(area);
+      // We don't need to add it again if it's already in liveAreas, but we update its name
+      return area;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save custom area";
+      return rejectWithValue(msg);
+    }
+  }
+);
+
 const dataSlice = createSlice({
   name: "data",
   initialState,
@@ -117,6 +131,17 @@ const dataSlice = createSlice({
               }
             });
           }
+        }
+      })
+      
+      // Save custom area
+      .addCase(saveCustomAreaThunk.fulfilled, (state, action) => {
+        const existingArea = state.areas.find(a => a.id === action.payload.id);
+        if (existingArea) {
+          existingArea.name = action.payload.name;
+          existingArea.slug = action.payload.slug;
+        } else {
+          state.areas.push(action.payload);
         }
       });
   }

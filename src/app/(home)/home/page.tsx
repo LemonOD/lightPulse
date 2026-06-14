@@ -5,8 +5,10 @@ import ReportForm from "@/components/home/report-form";
 import UptimeTrend from "@/components/home/uptime-trend";
 import MapPreview from "@/components/home/map-preview";
 import ActivityFeed from "@/components/home/activity-feed";
+import { useAutoLocation } from "@/hooks/use-auto-location";
 
 export default function Home() {
+  useAutoLocation();
   return (
     <main className="flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:py-10">
       

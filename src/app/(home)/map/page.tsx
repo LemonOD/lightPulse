@@ -2,7 +2,7 @@
 
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
-import { submitReport, addLiveAreas } from "@/store/slices/dataSlice";
+import { submitReport, addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import { GeocodedPlace } from "@/components/shared/address-autocomplete";
 import { getAreaStatusFromReports } from "@/lib/db";
 import { X } from "lucide-react";
@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
+import { useAutoLocation } from "@/hooks/use-auto-location";
 
 // Helper utility (already defined in @/lib/geolocation but imported/bound here)
 
@@ -50,50 +51,27 @@ export default function MapPage() {
   const [showLegendMobile, setShowLegendMobile] = useState(false);
   const [centerOnUser, setCenterOnUser] = useState(false);
 
-  // Automatic geolocator on map load to instantly focus user context
+  // Global auto-location: registers GPS position & "My Current Location" from any page
+  useAutoLocation();
+
+  // Map-specific: when userLocation becomes available for the first time, auto-select the closest area
   useEffect(() => {
-    if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
+    if (!userLocation || areas.length === 0) return;
+    
+    let closestArea = areas[0];
+    let minDistance = Infinity;
+    areas.forEach((area) => {
+      const dist = getHaversineDistance(userLocation[0], userLocation[1], area.lat, area.lng);
+      if (dist < minDistance) {
+        minDistance = dist;
+        closestArea = area;
+      }
+    });
 
-    getPreciseLocation({
-      enableHighAccuracy: true,
-      timeout: 8000,
-      maximumAge: 120000, // 2 minutes cache is fine
-      fallbackToLowAccuracy: true
-    })
-      .then(async ([latitude, longitude]) => {
-        const coords: [number, number] = [latitude, longitude];
-
-        // Store location coordinates globally in Redux
-        dispatch(setUserLocation(coords));
-        setCenterOnUser(true);
-
-        // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
-        const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
-        if (liveAreas.length > 0) {
-          dispatch(addLiveAreas(liveAreas));
-        }
-
-        // Compute closest area from combined list
-        const combined = [...areas, ...liveAreas];
-        let closestArea = combined[0] || areas[0];
-        let minDistance = Infinity;
-
-        combined.forEach((area) => {
-          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestArea = area;
-          }
-        });
-
-        // Focus and center Leaflet/Google map
-        dispatch(setSelectedAreaId(closestArea.id));
-      })
-      .catch((err) => {
-        console.log("Auto-mount geolocator skipped or unauthorized on map page:", err);
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areas, dispatch]);
+    dispatch(setSelectedAreaId(closestArea.id));
+    setCenterOnUser(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation]);
 
   // Compute areas with their live status metrics
   const areasWithStatus = useMemo(() => {
@@ -193,18 +171,35 @@ export default function MapPage() {
       .then(async ([latitude, longitude]) => {
         const coords: [number, number] = [latitude, longitude];
 
+        // Smart hybrid reverse geocoding
+        let lgaName = "Your Exact Location";
+        try {
+          lgaName = await reverseGeocodeCoordinates(latitude, longitude);
+        } catch (geocodeErr) {
+          console.warn("Reverse geocode failed:", geocodeErr);
+        }
+
+        const myLocationArea = {
+          id: `custom-loc-gps`,
+          name: "My Current Location",
+          slug: "my-current-location",
+          lat: latitude,
+          lng: longitude,
+          description: lgaName,
+          region: "Custom Location",
+        };
+
         // Store globally in Redux
         dispatch(setUserLocation(coords));
         setCenterOnUser(true);
 
         // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
         const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
-        if (liveAreas.length > 0) {
-          dispatch(addLiveAreas(liveAreas));
-        }
+        
+        dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
 
         // Compute distances and find closest area from combined list
-        const combined = [...areas, ...liveAreas];
+        const combined = [...areas, myLocationArea, ...liveAreas];
         let closestArea = combined[0] || areas[0];
         let minDistance = Infinity;
 
@@ -222,20 +217,10 @@ export default function MapPage() {
         // Dismiss loading toast
         toast.dismiss(toastId);
 
-        // Smart hybrid reverse geocoding (uses Google client Geocoder if active)
-        try {
-          const lgaName = await reverseGeocodeCoordinates(latitude, longitude);
-          toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
-            icon: "📍",
-            duration: 4000
-          });
-        } catch (geocodeErr) {
-          console.warn("Reverse geocode failed:", geocodeErr);
-          toast.success(`GPS Calibrated! Centered on closest area: ${closestArea.name} (${minDistance.toFixed(1)} km away).`, {
-            icon: "📍",
-            duration: 4000
-          });
-        }
+        toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
+          icon: "📍",
+          duration: 4000
+        });
       })
       .catch((error) => {
         toast.dismiss(toastId);
@@ -266,16 +251,26 @@ export default function MapPage() {
     }
   };
 
-  const handleReportSubmit = async (e: React.FormEvent) => {
+  const handleReportSubmit = async (e: React.FormEvent, customName?: string) => {
     e.preventDefault();
     if (!reportStatus || !activeArea) return;
 
     setIsSubmitting(true);
     try {
+      const finalAreaName = customName ? customName.trim() || activeArea.name : activeArea.name;
+
+      if (activeArea.id === "custom-loc-gps" && finalAreaName !== activeArea.name) {
+        await dispatch(saveCustomAreaThunk({
+          ...activeArea,
+          name: finalAreaName,
+          slug: finalAreaName.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+        }));
+      }
+
       await dispatch(
         submitReport({
           area_id: activeArea.id,
-          area_name: activeArea.name,
+          area_name: finalAreaName,
           status: reportStatus,
           comment: comment.trim() || `Status updated to ${reportStatus}`,
         })
@@ -425,6 +420,7 @@ export default function MapPage() {
         setComment={setComment}
         isSubmitting={isSubmitting}
         handleReportSubmit={handleReportSubmit}
+        userLocation={userLocation}
       />
 
     </main>

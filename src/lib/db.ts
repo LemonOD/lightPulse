@@ -162,44 +162,50 @@ class SupabaseDatabaseService implements IDatabaseService {
       expires_at: expiresAt,
     };
     
-    // Only attach optional fields if they exist to match schema strictly
     if (newReportData.comment) insertPayload.comment = newReportData.comment;
     if (newReportData.latitude) insertPayload.latitude = newReportData.latitude;
     if (newReportData.longitude) insertPayload.longitude = newReportData.longitude;
 
-    const { data, error } = await supabase
-      .from("reports")
-      .insert(insertPayload)
-      .select()
-      .single();
+    // Invoke the Deno Edge Function for Real-time Intelligence & Fraud Prevention
+    const { data, error } = await supabase.functions.invoke('process-report', {
+      body: insertPayload
+    });
 
     if (error) {
-      throw new Error(`Failed to create report: ${error.message}`);
+      console.error("Supabase edge function invocation error details:", error);
+      // Attempt to read the raw JSON error body returned by our Deno edge function
+      if (error.context) {
+        try {
+          const errBody = await error.context.json();
+          console.error("Parsed Edge Function Error:", errBody);
+          throw new Error(errBody.error || "Edge function failed");
+        } catch (e) {
+          // Fallback if it's not valid JSON
+          throw error;
+        }
+      }
+      throw error;
     }
 
-    // Trigger aggregation engine
-    calculateAreaStatus(newReportData.area_id).catch(console.error);
+    if (data.error) {
+      throw new Error(data.error);
+    }
 
-    // Get area name
-    const { data: areaData } = await supabase
-      .from("areas")
-      .select("name")
-      .eq("id", newReportData.area_id)
-      .single();
+    const createdReport = data.report;
 
     return {
-      id: data.id,
-      area_id: data.area_id,
-      area_name: areaData?.name || "Unknown Area",
-      status: data.status as ReportStatus,
-      comment: data.comment || "",
-      latitude: data.latitude,
-      longitude: data.longitude,
-      created_at: data.created_at,
-      device_id: data.device_id,
-      expires_at: data.expires_at,
-      confidence_score: data.confidence_score,
-      has_confirmed: false
+      id: createdReport.id,
+      area_id: createdReport.area_id,
+      area_name: newReportData.area_name || "Unknown Area", // Use requested name
+      status: createdReport.status as ReportStatus,
+      comment: createdReport.comment || "",
+      latitude: createdReport.latitude,
+      longitude: createdReport.longitude,
+      created_at: createdReport.created_at,
+      device_id: createdReport.device_id,
+      expires_at: createdReport.expires_at,
+      confidence_score: createdReport.confidence_score,
+      has_confirmed: true // We can assume the user confirmed their own newly created or clustered report
     };
   }
 

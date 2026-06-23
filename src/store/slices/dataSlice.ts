@@ -95,6 +95,29 @@ const dataSlice = createSlice({
           state.areas.push(newArea);
         }
       });
+    },
+    // Realtime action: update an area's current_status
+    updateAreaStatus: (state, action: PayloadAction<{ id: string; current_status: string }>) => {
+      const area = state.areas.find(a => a.id === action.payload.id);
+      if (area) {
+        area.current_status = action.payload.current_status as any;
+      }
+    },
+    // Realtime action: insert or replace a report
+    upsertReport: (state, action: PayloadAction<Report>) => {
+      const idx = state.reports.findIndex(r => r.id === action.payload.id);
+      if (idx !== -1) {
+        state.reports[idx] = action.payload;
+      } else {
+        state.reports.unshift(action.payload);
+      }
+    },
+    // Realtime action: update confidence score
+    updateReportConfidence: (state, action: PayloadAction<{ id: string; newScore: number }>) => {
+      const report = state.reports.find(r => r.id === action.payload.id);
+      if (report) {
+        report.confidence_score = action.payload.newScore;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -116,7 +139,11 @@ const dataSlice = createSlice({
       
       // Submit report
       .addCase(submitReport.fulfilled, (state, action: PayloadAction<Report>) => {
-        state.reports.unshift(action.payload); // Add to beginning of timeline
+        // Prevent duplicate if the realtime hook already injected it
+        const exists = state.reports.some(r => r.id === action.payload.id);
+        if (!exists) {
+          state.reports.unshift(action.payload);
+        }
       })
       
       // Confirm report
@@ -156,6 +183,6 @@ const dataSlice = createSlice({
   }
 });
 
-export const { addLiveAreas } = dataSlice.actions;
+export const { addLiveAreas, updateAreaStatus, upsertReport, updateReportConfidence } = dataSlice.actions;
 
 export default dataSlice.reducer;

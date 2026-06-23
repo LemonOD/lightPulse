@@ -89,7 +89,7 @@ export default function Header() {
                 <Zap className="h-5 w-5 fill-current" />
               </div>
               <span className="text-xl font-semibold tracking-tight text-slate-900">
-                Lyt<span className="text-[#22C55E]">Pulse</span>
+                Light<span className="text-[#22C55E]">Pulse</span>
               </span>
             </Link>
 

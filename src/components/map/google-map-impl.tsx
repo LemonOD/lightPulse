@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Area, ReportStatus } from "@/lib/mockData";
+import { Area, ReportStatus } from "@/lib/types";
 import { setSelectedAreaId } from "@/store/slices/appSlice";
 import { useAppDispatch } from "@/store";
 
@@ -66,19 +66,19 @@ export default function GoogleMapImpl({
 
   const getMarkerHtml = (status: ReportStatus, name: string) => {
     const colorMap = {
-      stable: "#22c55e",
-      outage: "#ef4444",
-      unstable: "#f59e0b",
-      unknown: "#6b7280"
+      LIGHT_AVAILABLE: "#22c55e",
+      LIGHT_OUT: "#ef4444",
+      LOW_VOLTAGE: "#f59e0b",
+      UNKNOWN: "#6b7280"
     };
     
-    const iconColor = colorMap[status] || colorMap.unknown;
+    const iconColor = colorMap[status] || colorMap.UNKNOWN;
     
-    const svgMarkup = status === "stable" 
+    const svgMarkup = status === "LIGHT_AVAILABLE" 
       ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width: 18px; height: 18px;"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
-      : status === "outage"
+      : status === "LIGHT_OUT"
       ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>`
-      : status === "unstable"
+      : status === "LOW_VOLTAGE"
       ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
       : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
 
@@ -95,13 +95,13 @@ export default function GoogleMapImpl({
   };
 
   const getPopupHtml = (area: Area & { status: ReportStatus }) => {
-    const statusColor = area.status === "stable" ? "bg-emerald-500" :
-                        area.status === "outage" ? "bg-red-500" :
-                        area.status === "unstable" ? "bg-amber-500" : "bg-slate-300";
+    const statusColor = area.status === "LIGHT_AVAILABLE" ? "bg-emerald-500" :
+                        area.status === "LIGHT_OUT" ? "bg-red-500" :
+                        area.status === "LOW_VOLTAGE" ? "bg-amber-500" : "bg-slate-300";
     
-    const statusLabel = area.status === "stable" ? "ONLINE" :
-                        area.status === "outage" ? "OUTAGE" :
-                        area.status === "unstable" ? "FLUCTUATING" : "UNKNOWN";
+    const statusLabel = area.status === "LIGHT_AVAILABLE" ? "ONLINE" :
+                        area.status === "LIGHT_OUT" ? "OUTAGE" :
+                        area.status === "LOW_VOLTAGE" ? "FLUCTUATING" : "UNKNOWN";
 
     return `<div class="flex flex-col gap-1.5 p-1 font-sans text-slate-800 min-w-[140px]">
               <span class="text-sm font-extrabold tracking-tight leading-none text-slate-800">

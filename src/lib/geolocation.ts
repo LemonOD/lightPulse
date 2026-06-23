@@ -1,4 +1,4 @@
-import { Area } from "./mockData";
+import { Area } from "./types";
 
 interface PreciseLocationOptions {
   enableHighAccuracy?: boolean;
@@ -121,7 +121,7 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
       {
         headers: {
-          "User-Agent": "LytPulse/1.0"
+          "User-Agent": "LightPulse/1.0"
         }
       }
     );
@@ -150,7 +150,7 @@ export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Pro
     
     const response = await fetch(osmUrl, {
       headers: {
-        "User-Agent": "LytPulse/1.0"
+        "User-Agent": "LightPulse/1.0"
       }
     });
 

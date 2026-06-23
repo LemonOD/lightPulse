@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, Plus } from "lucide-react";
-import { Area, ReportStatus } from "@/lib/mockData";
+import { Area, ReportStatus } from "@/lib/types";
 import AddressAutocomplete, { GeocodedPlace } from "../shared/address-autocomplete";
 import { useAppDispatch } from "@/store";
 import { addLiveAreas } from "@/store/slices/dataSlice";
@@ -87,11 +87,11 @@ export default function MapSidebar({
                   item.status
                 )}`}
               >
-                {item.status === "stable"
+                {item.status === "LIGHT_AVAILABLE"
                   ? "STABLE"
-                  : item.status === "outage"
+                  : item.status === "LIGHT_OUT"
                   ? "OUTAGE"
-                  : item.status === "unstable"
+                  : item.status === "LOW_VOLTAGE"
                   ? "UNSTABLE"
                   : "UNKNOWN"}
               </span>
@@ -101,11 +101,11 @@ export default function MapSidebar({
               <span className="text-[9px] font-bold text-slate-400">{item.timeAgo}</span>
               <span
                 className={`text-[9px] font-bold tracking-wide flex items-center gap-1 ${
-                  item.status === "stable"
+                  item.status === "LIGHT_AVAILABLE"
                     ? "text-[#22C55E]"
-                    : item.status === "outage"
+                    : item.status === "LIGHT_OUT"
                     ? "text-red-500"
-                    : item.status === "unstable"
+                    : item.status === "LOW_VOLTAGE"
                     ? "text-amber-500"
                     : "text-slate-400"
                 }`}

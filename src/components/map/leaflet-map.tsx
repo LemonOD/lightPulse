@@ -3,7 +3,7 @@
 import React from "react";
 import LeafletMapImpl from "./leaflet-map-impl";
 import GoogleMapImpl from "./google-map-impl";
-import { Area, ReportStatus } from "@/lib/mockData";
+import { Area, ReportStatus } from "@/lib/types";
 
 interface UnifiedMapProps {
   areas: (Area & { status: ReportStatus })[];

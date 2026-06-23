@@ -12,7 +12,7 @@ export default function MapActionButtons({
   handleOpenReportModal,
 }: MapActionButtonsProps) {
   return (
-    <div className="absolute bottom-38 right-4 z-10 flex flex-col gap-3 md:hidden pointer-events-auto">
+    <div className="absolute bottom-[140px] md:bottom-8 right-4 md:right-6 z-10 flex flex-col gap-3 pointer-events-auto">
       {/* Compass/GPS Target button */}
       <button
         onClick={handleDetectLocation}

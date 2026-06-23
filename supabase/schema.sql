@@ -56,3 +56,8 @@ create policy "Allow public update access on reports" on reports for update usin
 
 create policy "Allow public read access on confirmations" on confirmations for select using (true);
 create policy "Allow public insert access on confirmations" on confirmations for insert with check (true);
+
+-- Grant basic privileges to Supabase roles
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.areas TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.reports TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.confirmations TO anon, authenticated;

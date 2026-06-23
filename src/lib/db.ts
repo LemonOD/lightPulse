@@ -1,127 +1,75 @@
-import { supabase, isSupabaseConfigured } from "./supabase";
-import { Area, Report, ReportStatus, INITIAL_AREAS, INITIAL_REPORTS } from "./mockData";
+import { supabase } from "./supabase";
+import { Area, Report, ReportStatus } from "./types";
+import { getDeviceId } from "./device";
 
 // Define a standard service interface
 export interface IDatabaseService {
   getAreas(): Promise<Area[]>;
   getReports(): Promise<Report[]>;
-  createReport(report: Omit<Report, "id" | "created_at" | "confirmations_count">): Promise<Report>;
+  createReport(report: Omit<Report, "id" | "created_at" | "confidence_score" | "device_id" | "expires_at">): Promise<Report>;
   confirmReport(reportId: string): Promise<number>;
   saveCustomArea(area: Area): Promise<void>;
 }
 
-// Local Storage / In-Memory Mock Implementation
-export function getClientUserId(): string {
-  if (typeof window === "undefined") return "server-user";
-  let userId = localStorage.getItem("lytpulse_user_id");
-  if (!userId) {
-    userId = `usr-${Math.random().toString(36).substr(2, 9)}`;
-    localStorage.setItem("lytpulse_user_id", userId);
-  }
-  return userId;
+export function isReportExpired(report: Report | { expires_at: string }): boolean {
+  return new Date(report.expires_at).getTime() < Date.now();
 }
 
-class MockDatabaseService implements IDatabaseService {
-  private getStorageItem<T>(key: string, defaultValue: T): T {
-    if (typeof window === "undefined") return defaultValue;
-    const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : defaultValue;
+/**
+ * Area Status Aggregation Engine
+ */
+export async function calculateAreaStatus(areaId: string): Promise<void> {
+  const now = new Date().toISOString();
+  
+  const { data: activeReports, error } = await supabase
+    .from("reports")
+    .select("status, created_at")
+    .eq("area_id", areaId)
+    .gt("expires_at", now);
+
+  if (error || !activeReports || activeReports.length === 0) {
+    await supabase.from("areas").update({
+      current_status: "UNKNOWN",
+    }).eq("id", areaId);
+    return;
   }
 
-  private setStorageItem<T>(key: string, value: T): void {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(key, JSON.stringify(value));
+  const counts: Record<string, number> = {
+    "LIGHT_AVAILABLE": 0,
+    "LIGHT_OUT": 0,
+    "LOW_VOLTAGE": 0,
+    "UNKNOWN": 0
+  };
+
+  let latestReportTime = new Date(0);
+
+  activeReports.forEach(r => {
+    if (counts[r.status] !== undefined) {
+      counts[r.status]++;
+    }
+    const reportTime = new Date(r.created_at);
+    if (reportTime > latestReportTime) {
+      latestReportTime = reportTime;
+    }
+  });
+
+  let maxCount = -1;
+  let majorityStatus = "UNKNOWN";
+
+  for (const [status, count] of Object.entries(counts)) {
+    if (count > maxCount) {
+      maxCount = count;
+      majorityStatus = status;
     }
   }
 
-  private initDatabase() {
-    if (typeof window === "undefined") return;
-    if (!localStorage.getItem("lytpulse_areas")) {
-      this.setStorageItem("lytpulse_areas", INITIAL_AREAS);
-    }
-    if (!localStorage.getItem("lytpulse_reports")) {
-      this.setStorageItem("lytpulse_reports", INITIAL_REPORTS);
-    }
-  }
-
-  constructor() {
-    this.initDatabase();
-  }
-
-  async getAreas(): Promise<Area[]> {
-    return this.getStorageItem<Area[]>("lytpulse_areas", INITIAL_AREAS);
-  }
-
-  async getReports(): Promise<Report[]> {
-    const reports = this.getStorageItem<Report[]>("lytpulse_reports", INITIAL_REPORTS);
-    // Sort reverse-chronologically
-    return reports.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  }
-
-  async createReport(newReportData: Omit<Report, "id" | "created_at" | "confirmations_count">): Promise<Report> {
-    const reports = this.getStorageItem<Report[]>("lytpulse_reports", INITIAL_REPORTS);
-    const newReport: Report = {
-      ...newReportData,
-      user_id: newReportData.user_id || getClientUserId(),
-      id: `rep-${Math.random().toString(36).substr(2, 9)}`,
-      created_at: new Date().toISOString(),
-      confirmations_count: 0,
-      has_confirmed: false
-    };
-
-    reports.push(newReport);
-    this.setStorageItem("lytpulse_reports", reports);
-    return newReport;
-  }
-
-  async confirmReport(reportId: string): Promise<number> {
-    const reports = this.getStorageItem<Report[]>("lytpulse_reports", INITIAL_REPORTS);
-    const reportIndex = reports.findIndex(r => r.id === reportId);
-    
-    if (reportIndex !== -1) {
-      const confirmedReport = reports[reportIndex];
-      
-      // Enforce: Reporter cannot confirm their own report
-      if (confirmedReport.user_id === getClientUserId()) {
-        return confirmedReport.confirmations_count;
-      }
-      
-      if (!confirmedReport.has_confirmed) {
-        confirmedReport.confirmations_count += 1;
-        confirmedReport.has_confirmed = true;
-        
-        // Synchronize all similar reports in the same neighborhood showing the same status
-        reports.forEach((r) => {
-          if (
-            r.id !== confirmedReport.id && 
-            r.area_id === confirmedReport.area_id && 
-            r.status === confirmedReport.status
-          ) {
-            r.confirmations_count += 1;
-            r.has_confirmed = true;
-          }
-        });
-
-        this.setStorageItem("lytpulse_reports", reports);
-      }
-      return confirmedReport.confirmations_count;
-    }
-    return 0;
-  }
-
-  async saveCustomArea(area: Area): Promise<void> {
-    const areas = this.getStorageItem<Area[]>("lytpulse_areas", INITIAL_AREAS);
-    const existingIndex = areas.findIndex(a => a.id === area.id);
-    if (existingIndex !== -1) {
-      areas[existingIndex] = area;
-    } else {
-      areas.push(area);
-    }
-    this.setStorageItem("lytpulse_areas", areas);
-  }
+  await supabase.from("areas").update({
+    current_status: majorityStatus,
+    last_reported_at: latestReportTime.toISOString()
+  }).eq("id", areaId);
 }
 
-// Live Supabase Client Implementation
+
 class SupabaseDatabaseService implements IDatabaseService {
   async getAreas(): Promise<Area[]> {
     const { data, error } = await supabase
@@ -130,13 +78,14 @@ class SupabaseDatabaseService implements IDatabaseService {
       .order("name", { ascending: true });
     
     if (error) {
-      console.error("Error fetching areas from Supabase, falling back to initial data:", error);
-      return INITIAL_AREAS;
+      console.error("Error fetching areas from Supabase:", error);
+      return [];
     }
-    return data || INITIAL_AREAS;
+    return data || [];
   }
 
   async getReports(): Promise<Report[]> {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from("reports")
       .select(`
@@ -145,107 +94,159 @@ class SupabaseDatabaseService implements IDatabaseService {
         area:areas(name),
         status,
         comment,
+        latitude,
+        longitude,
         created_at,
-        user_id
+        device_id,
+        expires_at,
+        confidence_score
       `)
+      .gt("created_at", oneDayAgo)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching reports from Supabase, falling back:", error);
-      return INITIAL_REPORTS;
+      console.error("Error fetching reports from Supabase:", error);
+      return [];
     }
 
-    // Map fields from Supabase to Report schema
-    const formattedReports: Report[] = (data as unknown as {
-      id: string;
-      area_id: string;
-      area: { name: string } | null;
-      status: string;
-      comment: string | null;
-      created_at: string;
-      user_id?: string;
-    }[] || []).map((item) => ({
-      id: item.id,
-      area_id: item.area_id,
-      area_name: item.area?.name || "Unknown Area",
-      status: item.status as ReportStatus,
-      comment: item.comment || "",
-      created_at: item.created_at,
-      user_id: item.user_id,
-      confirmations_count: 0, // In production, loaded via subqueries or joins
-      has_confirmed: false
-    }));
+    const deviceId = getDeviceId();
 
-    // Load confirmations count
-    for (const r of formattedReports) {
-      const { count } = await supabase
-        .from("confirmations")
-        .select("*", { count: "exact", head: true })
-        .eq("report_id", r.id);
-      r.confirmations_count = count || 0;
+    // Map fields
+    const formattedReports: Report[] = [];
+    
+    // Concurrently fetch confirmations to set 'has_confirmed' for the current device
+    const { data: myConfirmations } = await supabase
+      .from("confirmations")
+      .select("report_id")
+      .eq("device_id", deviceId);
+      
+    const confirmedSet = new Set(myConfirmations?.map(c => c.report_id) || []);
+
+    for (const item of (data as any[])) {
+      formattedReports.push({
+        id: item.id,
+        area_id: item.area_id,
+        area_name: item.area?.name || "Unknown Area",
+        status: item.status as ReportStatus,
+        comment: item.comment || "",
+        latitude: item.latitude,
+        longitude: item.longitude,
+        created_at: item.created_at,
+        device_id: item.device_id,
+        expires_at: item.expires_at,
+        confidence_score: item.confidence_score || 1,
+        has_confirmed: confirmedSet.has(item.id)
+      });
     }
 
     return formattedReports;
   }
 
-  async createReport(newReportData: Omit<Report, "id" | "created_at" | "confirmations_count">): Promise<Report> {
-    const { data, error } = await supabase
-      .from("reports")
-      .insert({
-        area_id: newReportData.area_id,
-        status: newReportData.status,
-        comment: newReportData.comment,
-        user_id: newReportData.user_id || null
-      })
-      .select()
-      .single();
+  async createReport(newReportData: Omit<Report, "id" | "created_at" | "confidence_score" | "device_id" | "expires_at">): Promise<Report> {
+    const deviceId = getDeviceId();
+    
+    // Calculate expiration
+    const now = Date.now();
+    let expiresMs = now;
+    if (newReportData.status === "LIGHT_OUT") expiresMs += 2 * 60 * 60 * 1000;
+    else if (newReportData.status === "LOW_VOLTAGE") expiresMs += 1 * 60 * 60 * 1000;
+    else if (newReportData.status === "LIGHT_AVAILABLE") expiresMs += 3 * 60 * 60 * 1000;
+    else expiresMs += 2 * 60 * 60 * 1000;
+
+    const expiresAt = new Date(expiresMs).toISOString();
+
+    const insertPayload: any = {
+      area_id: newReportData.area_id,
+      status: newReportData.status,
+      device_id: deviceId,
+      expires_at: expiresAt,
+    };
+    
+    if (newReportData.comment) insertPayload.comment = newReportData.comment;
+    if (newReportData.latitude) insertPayload.latitude = newReportData.latitude;
+    if (newReportData.longitude) insertPayload.longitude = newReportData.longitude;
+
+    // Invoke the Deno Edge Function for Real-time Intelligence & Fraud Prevention
+    const { data, error } = await supabase.functions.invoke('process-report', {
+      body: insertPayload
+    });
 
     if (error) {
-      throw new Error(`Failed to create report: ${error.message}`);
+      console.error("Supabase edge function invocation error details:", error);
+      // Attempt to read the raw JSON error body returned by our Deno edge function
+      if (error.context) {
+        try {
+          const errBody = await error.context.json();
+          console.error("Parsed Edge Function Error:", errBody);
+          throw new Error(errBody.error || "Edge function failed");
+        } catch (e) {
+          // Fallback if it's not valid JSON
+          throw error;
+        }
+      }
+      throw error;
     }
 
-    // Get area name
-    const { data: areaData } = await supabase
-      .from("areas")
-      .select("name")
-      .eq("id", newReportData.area_id)
-      .single();
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    const createdReport = data.report;
 
     return {
-      id: data.id,
-      area_id: data.area_id,
-      area_name: areaData?.name || "Unknown Area",
-      status: data.status as ReportStatus,
-      comment: data.comment || "",
-      created_at: data.created_at,
-      user_id: data.user_id,
-      confirmations_count: 0,
-      has_confirmed: false
+      id: createdReport.id,
+      area_id: createdReport.area_id,
+      area_name: newReportData.area_name || "Unknown Area", // Use requested name
+      status: createdReport.status as ReportStatus,
+      comment: createdReport.comment || "",
+      latitude: createdReport.latitude,
+      longitude: createdReport.longitude,
+      created_at: createdReport.created_at,
+      device_id: createdReport.device_id,
+      expires_at: createdReport.expires_at,
+      confidence_score: createdReport.confidence_score,
+      has_confirmed: true // We can assume the user confirmed their own newly created or clustered report
     };
   }
 
   async confirmReport(reportId: string): Promise<number> {
+    const deviceId = getDeviceId();
+
+    // 1. Fetch report to check existence and current confidence score
+    const { data: report, error: reportError } = await supabase
+      .from("reports")
+      .select("area_id, confidence_score")
+      .eq("id", reportId)
+      .single();
+      
+    if (reportError || !report) return 0;
+
+    // 2. Insert confirmation. Because of UNIQUE(report_id, device_id), duplicates will fail.
     const { error: insertError } = await supabase
       .from("confirmations")
       .insert({
-        report_id: reportId
+        report_id: reportId,
+        device_id: deviceId
       });
 
+    // Code 23505 = unique violation. If so, they already confirmed, just return the current score.
     if (insertError) {
+      if (insertError.code === '23505') return report.confidence_score;
       console.error("Failed to add confirmation:", insertError);
+      return report.confidence_score;
     }
 
-    const { count, error } = await supabase
-      .from("confirmations")
-      .select("*", { count: "exact", head: true })
-      .eq("report_id", reportId);
+    // 3. Increment confidence_score on the report table
+    const newScore = (report.confidence_score || 1) + 1;
+    await supabase
+      .from("reports")
+      .update({ confidence_score: newScore })
+      .eq("id", reportId);
 
-    if (error) {
-      console.error("Failed to get confirmations count:", error);
-      return 0;
-    }
+    // 4. Trigger aggregation engine
+    calculateAreaStatus(report.area_id).catch(console.error);
 
-    return count || 0;
+    return newScore;
   }
 
   async saveCustomArea(area: Area): Promise<void> {
@@ -267,29 +268,29 @@ class SupabaseDatabaseService implements IDatabaseService {
   }
 }
 
-// Instantiate the active service based on config
-export const dbService: IDatabaseService = isSupabaseConfigured
-  ? new SupabaseDatabaseService()
-  : new MockDatabaseService();
+export const dbService: IDatabaseService = new SupabaseDatabaseService();
 
 /**
- * Utility helper to compute the current dynamic power status of an area
- * based on its recent reports. If there's a report in the last 6 hours,
- * it adopts that status. Otherwise, it defaults to 'unknown'.
+ * Utility helper to compute the current dynamic power status of an area locally
  */
 export function getAreaStatusFromReports(areaId: string, reports: Report[]): ReportStatus {
-  const areaReports = reports.filter(r => r.area_id === areaId);
-  if (areaReports.length === 0) return "unknown";
+  const activeReports = reports.filter(r => r.area_id === areaId && !isReportExpired(r));
+  if (activeReports.length === 0) return "UNKNOWN";
 
-  // Sort by date descending
-  const sorted = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-  const latest = sorted[0];
+  const counts: Record<string, number> = {};
+  activeReports.forEach(r => {
+    counts[r.status] = (counts[r.status] || 0) + 1;
+  });
 
-  // If latest report is within last 12 hours, use its status. Otherwise, treat as unknown.
-  const diffHours = (Date.now() - new Date(latest.created_at).getTime()) / (1000 * 60 * 60);
-  if (diffHours < 12) {
-    return latest.status;
+  let maxCount = -1;
+  let majorityStatus = "UNKNOWN";
+
+  for (const [status, count] of Object.entries(counts)) {
+    if (count > maxCount) {
+      maxCount = count;
+      majorityStatus = status;
+    }
   }
   
-  return "unknown";
+  return majorityStatus as ReportStatus;
 }

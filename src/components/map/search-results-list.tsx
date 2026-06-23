@@ -1,6 +1,6 @@
 "use client";
 
-import { Area, ReportStatus } from "@/lib/mockData";
+import { Area, ReportStatus } from "@/lib/types";
 
 interface SearchResultsListProps {
   mapSearch: string;
@@ -44,11 +44,11 @@ export default function SearchResultsList({
                 item.status
               )}`}
             >
-              {item.status === "stable"
+              {item.status === "LIGHT_AVAILABLE"
                 ? "STABLE"
-                : item.status === "outage"
+                : item.status === "LIGHT_OUT"
                 ? "OUTAGE"
-                : item.status === "unstable"
+                : item.status === "LOW_VOLTAGE"
                 ? "UNSTABLE"
                 : "UNKNOWN"}
             </span>

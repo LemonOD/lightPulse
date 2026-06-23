@@ -3,19 +3,24 @@
 import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { setUserLocation } from "@/store/slices/appSlice";
-import { addLiveAreas } from "@/store/slices/dataSlice";
-import { getPreciseLocation, reverseGeocodeCoordinates, fetchLiveNearbyAreasFromOSM } from "@/lib/geolocation";
+import { addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
+import { getPreciseLocation, reverseGeocodeCoordinates, fetchLiveNearbyAreasFromOSM, getHaversineDistance } from "@/lib/geolocation";
 
 export function useAutoLocation() {
   const dispatch = useAppDispatch();
   const areas = useAppSelector((state) => state.data.areas);
   const userLocation = useAppSelector((state) => state.app.userLocation);
   
-  // Ref to ensure we only try to geolocate once on mount if areas are loaded
+  // Ref to ensure we only try to geolocate once on mount
   const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0 || hasAttemptedRef.current || userLocation) return;
+    // Note: We removed `areas.length === 0` from the early return condition 
+    // so we CAN seed the first area if the db is empty.
+    if (typeof window === "undefined" || !navigator.geolocation || hasAttemptedRef.current || userLocation) return;
+    
+    // Only attempt if we have loaded areas from DB (even if empty) to avoid race conditions.
+    // If state.data.loading is true, maybe wait, but let's assume it has fired or is firing.
     
     hasAttemptedRef.current = true;
 
@@ -31,12 +36,30 @@ export function useAutoLocation() {
         // Store location coordinates globally in Redux
         dispatch(setUserLocation(coords));
 
-        // Smart hybrid reverse geocoding
         let lgaName = "Your Exact Location";
         try {
           lgaName = await reverseGeocodeCoordinates(latitude, longitude);
         } catch (e) {
           console.warn("Reverse geocode failed", e);
+        }
+
+        // Fetch live actual nearby areas/streets from OpenStreetMap
+        const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
+
+        // If the database is completely empty, automatically save the nearest identified OSM area to the database
+        // so the user doesn't face an empty "Unknown Location" anxiety.
+        if (areas.length === 0 && liveAreas.length > 0) {
+          // Find the closest one
+          const closestArea = [...liveAreas].sort((a, b) => {
+             const distA = getHaversineDistance(latitude, longitude, a.lat, a.lng);
+             const distB = getHaversineDistance(latitude, longitude, b.lat, b.lng);
+             return distA - distB;
+          })[0];
+          
+          if (closestArea) {
+             // Save it to Supabase via Thunk
+             dispatch(saveCustomAreaThunk(closestArea));
+          }
         }
 
         const myLocationArea = {
@@ -48,15 +71,12 @@ export function useAutoLocation() {
           description: lgaName,
           region: "Custom Location",
         };
-
-        // Fetch live actual nearby areas/streets from OpenStreetMap to place them on the map
-        const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
         
-        // Dispatch custom location and OSM locations
+        // Dispatch custom location and OSM locations to UI state
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
       })
       .catch((err) => {
         console.log("Auto-mount geolocator skipped or unauthorized:", err);
       });
-  }, [areas, dispatch, userLocation]);
+  }, [areas.length, dispatch, userLocation]);
 }

@@ -171,7 +171,7 @@ export default function AreasPage() {
         : null;
 
       // Confirmations sum
-      const totalConfirms = areaReports.reduce((sum, r) => sum + r.confirmations_count, 0);
+      const totalConfirms = areaReports.reduce((sum, r) => sum + r.confidence_score, 0);
 
       return {
         ...area,
@@ -225,7 +225,7 @@ export default function AreasPage() {
         return {
           ...a,
           timeAgo: "Updated 2m ago",
-          status: "stable" as const,
+          status: "LIGHT_AVAILABLE" as const,
           customInfo: "",
           avatars: [
             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop",
@@ -239,7 +239,7 @@ export default function AreasPage() {
         return {
           ...a,
           timeAgo: "Updated 8m ago",
-          status: "outage" as const,
+          status: "LIGHT_OUT" as const,
           customInfo: "Reports spiking",
           confirmations: 42,
           avatars: [],
@@ -251,7 +251,7 @@ export default function AreasPage() {
       return {
         ...a,
         timeAgo: "Updated 15m ago",
-        status: "unstable" as const,
+        status: "LOW_VOLTAGE" as const,
         customInfo: "Voltage unstable",
         avatars: [],
         avatarExtra: "",

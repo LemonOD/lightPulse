@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { submitReport } from "@/store/slices/dataSlice";
 import { Zap, ZapOff, AlertTriangle, LucideIcon } from "lucide-react";
-import { ReportStatus } from "@/lib/mockData";
+import { ReportStatus } from "@/lib/types";
 import { toast } from "react-hot-toast";
 
 const BASE_BUTTON_CLASS =
@@ -20,20 +20,20 @@ interface StatusButtonConfig {
 
 const REPORT_STATUS_CONFIG: StatusButtonConfig[] = [
   {
-    status: "outage",
+    status: "LIGHT_OUT",
     label: "Light Out",
     icon: ZapOff,
     bgClass: "bg-[#b21d23] hover:bg-red-800",
   },
   {
-    status: "stable",
+    status: "LIGHT_AVAILABLE",
     label: "Light Restored",
     icon: Zap,
     bgClass: "bg-[#22c55e] hover:bg-emerald-600",
     iconClass: "fill-white",
   },
   {
-    status: "unstable",
+    status: "LOW_VOLTAGE",
     label: "Low Voltage",
     icon: AlertTriangle,
     bgClass: "bg-[#f59e0b] hover:bg-amber-600",
@@ -44,15 +44,16 @@ export default function ReportForm() {
   const dispatch = useAppDispatch();
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
   const areas = useAppSelector((state) => state.data.areas);
+  const userLocation = useAppSelector((state) => state.app.userLocation);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const activeArea = areas.find(a => a.id === selectedAreaId) || areas[0] || { name: "Lagos Mainland", id: "" };
 
   const getDefaultComment = (status: ReportStatus): string => {
-    if (status === "stable") return "Light is up!";
-    if (status === "outage") return "Blackout reported.";
-    if (status === "unstable") return "Voltage fluctuations detected.";
+    if (status === "LIGHT_AVAILABLE") return "Light is up!";
+    if (status === "LIGHT_OUT") return "Blackout reported.";
+    if (status === "LOW_VOLTAGE") return "Voltage fluctuations detected.";
     return "Status update submitted.";
   };
 
@@ -67,6 +68,7 @@ export default function ReportForm() {
           area_name: activeArea.name,
           status: status,
           comment: getDefaultComment(status),
+          ...(userLocation ? { latitude: userLocation[0], longitude: userLocation[1] } : {}),
         })
       ).unwrap();
 

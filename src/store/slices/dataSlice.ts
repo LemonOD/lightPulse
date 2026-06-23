@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { Area, Report, ReportStatus } from "@/lib/mockData";
+import { Area, Report, ReportStatus } from "@/lib/types";
 import { dbService } from "@/lib/db";
 
 interface DataState {
@@ -36,7 +36,7 @@ export const fetchInitialData = createAsyncThunk(
 export const submitReport = createAsyncThunk(
   "data/submitReport",
   async (
-    reportData: { area_id: string; area_name: string; status: ReportStatus; comment: string; user_id?: string },
+    reportData: Omit<Report, "id" | "created_at" | "confidence_score" | "device_id" | "expires_at">,
     { rejectWithValue }
   ) => {
     try {
@@ -115,7 +115,7 @@ const dataSlice = createSlice({
         const confirmedReport = state.reports.find(r => r.id === action.payload.reportId);
         if (confirmedReport) {
           const wasConfirmed = confirmedReport.has_confirmed;
-          confirmedReport.confirmations_count = action.payload.count;
+          confirmedReport.confidence_score = action.payload.count;
           confirmedReport.has_confirmed = true;
 
           // If this is a fresh confirmation click, synchronize all matching local reports
@@ -126,7 +126,7 @@ const dataSlice = createSlice({
                 r.area_id === confirmedReport.area_id && 
                 r.status === confirmedReport.status
               ) {
-                r.confirmations_count += 1;
+                r.confidence_score += 1;
                 r.has_confirmed = true;
               }
             });

@@ -1,4 +1,4 @@
-import { Area } from "./mockData";
+import { Area } from "./types";
 
 interface PreciseLocationOptions {
   enableHighAccuracy?: boolean;

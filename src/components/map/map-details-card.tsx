@@ -1,7 +1,7 @@
 "use client";
 
 import { Zap, ZapOff, AlertTriangle, ChevronRight } from "lucide-react";
-import { Area, ReportStatus } from "@/lib/mockData";
+import { Area, ReportStatus } from "@/lib/types";
 
 interface MapDetailsCardProps {
   activeArea: Area & { status: ReportStatus; timeAgo: string; detailLabel: string } | null;
@@ -23,16 +23,16 @@ export default function MapDetailsCard({
         {/* Colored Indicator Block exactly matching screenshot */}
         <div
           className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${
-            activeArea.status === "stable"
+            activeArea.status === "LIGHT_AVAILABLE"
               ? "bg-emerald-500 text-white"
-              : activeArea.status === "outage"
+              : activeArea.status === "LIGHT_OUT"
               ? "bg-[#b21d23] text-white"
               : "bg-amber-500 text-white"
           }`}
         >
-          {activeArea.status === "stable" ? (
+          {activeArea.status === "LIGHT_AVAILABLE" ? (
             <Zap className="h-5.5 w-5.5 fill-white" />
-          ) : activeArea.status === "outage" ? (
+          ) : activeArea.status === "LIGHT_OUT" ? (
             <ZapOff className="h-5.5 w-5.5 stroke-[2.25]" />
           ) : (
             <AlertTriangle className="h-5.5 w-5.5 stroke-[2.25]" />

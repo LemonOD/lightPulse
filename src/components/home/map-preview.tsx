@@ -14,16 +14,16 @@ export default function MapPreview() {
   const userLocation = useAppSelector((state) => state.app.userLocation);
 
   const getStatusDotClass = (status: string) => {
-    if (status === "stable") return "bg-emerald-500";
-    if (status === "outage") return "bg-red-500";
-    if (status === "unstable") return "bg-amber-500";
+    if (status === "LIGHT_AVAILABLE") return "bg-emerald-500";
+    if (status === "LIGHT_OUT") return "bg-red-500";
+    if (status === "LOW_VOLTAGE") return "bg-amber-500";
     return "bg-slate-400";
   };
 
   const getBadgeStyle = (status: string) => {
-    if (status === "stable") return "border-emerald-100/50 bg-emerald-50 text-emerald-600";
-    if (status === "outage") return "border-red-100/50 bg-red-50 text-red-600";
-    if (status === "unstable") return "border-amber-100/50 bg-amber-50 text-amber-600";
+    if (status === "LIGHT_AVAILABLE") return "border-emerald-100/50 bg-emerald-50 text-emerald-600";
+    if (status === "LIGHT_OUT") return "border-red-100/50 bg-red-50 text-red-600";
+    if (status === "LOW_VOLTAGE") return "border-amber-100/50 bg-amber-50 text-amber-600";
     return "border-slate-100/50 bg-slate-50 text-slate-500";
   };
 
@@ -62,9 +62,9 @@ export default function MapPreview() {
           <path d="M40 0 C70 50 180 50 200 128" />
           <path d="M0 100 C150 100 150 20 320 20" />
           
-          <circle cx="130" cy="44" r="3" className={`${nearbyAreas[0]?.status === "stable" ? "fill-emerald-400 stroke-emerald-950 animate-pulse" : nearbyAreas[0]?.status === "outage" ? "fill-red-500 stroke-red-950" : "fill-amber-500 stroke-amber-950"} stroke-1`} />
-          <circle cx="220" cy="49" r="3" className={`${nearbyAreas[1]?.status === "stable" ? "fill-emerald-400 stroke-emerald-950 animate-pulse" : nearbyAreas[1]?.status === "outage" ? "fill-red-500 stroke-red-950" : "fill-amber-500 stroke-amber-950"} stroke-1`} />
-          <circle cx="165" cy="85" r="3" className={`${nearbyAreas[2]?.status === "stable" ? "fill-emerald-400 stroke-emerald-950 animate-pulse" : nearbyAreas[2]?.status === "outage" ? "fill-red-500 stroke-red-950" : "fill-amber-500 stroke-amber-950"} stroke-1`} />
+          <circle cx="130" cy="44" r="3" className={`${nearbyAreas[0]?.status === "LIGHT_AVAILABLE" ? "fill-emerald-400 stroke-emerald-950 animate-pulse" : nearbyAreas[0]?.status === "LIGHT_OUT" ? "fill-red-500 stroke-red-950" : "fill-amber-500 stroke-amber-950"} stroke-1`} />
+          <circle cx="220" cy="49" r="3" className={`${nearbyAreas[1]?.status === "LIGHT_AVAILABLE" ? "fill-emerald-400 stroke-emerald-950 animate-pulse" : nearbyAreas[1]?.status === "LIGHT_OUT" ? "fill-red-500 stroke-red-950" : "fill-amber-500 stroke-amber-950"} stroke-1`} />
+          <circle cx="165" cy="85" r="3" className={`${nearbyAreas[2]?.status === "LIGHT_AVAILABLE" ? "fill-emerald-400 stroke-emerald-950 animate-pulse" : nearbyAreas[2]?.status === "LIGHT_OUT" ? "fill-red-500 stroke-red-950" : "fill-amber-500 stroke-amber-950"} stroke-1`} />
         </svg>
 
         <div className="absolute flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg transition-transform duration-300 group-hover:scale-105 z-10 select-none">
@@ -130,7 +130,7 @@ export default function MapPreview() {
                   </span>
                   <span className="text-[7px] text-slate-400 font-extrabold uppercase mt-0.5">Nearby</span>
                   <span className={`h-3.5 w-3.5 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white mt-1 ${
-                    nearbyAreas[2].status === "stable" ? "animate-pulse" : ""
+                    nearbyAreas[2].status === "LIGHT_AVAILABLE" ? "animate-pulse" : ""
                   } ${getStatusDotClass(nearbyAreas[2].status)}`}>
                     <Zap className="h-2 w-2 fill-white stroke-[2.5]" />
                   </span>
@@ -170,7 +170,7 @@ export default function MapPreview() {
                 {area.name}
               </span>
               <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${getBadgeStyle(area.status)}`}>
-                {area.status === "stable" ? "ONLINE" : area.status === "outage" ? "OFFLINE" : area.status === "unstable" ? "UNSTABLE" : "UNKNOWN"}
+                {area.status === "LIGHT_AVAILABLE" ? "ONLINE" : area.status === "LIGHT_OUT" ? "OFFLINE" : area.status === "LOW_VOLTAGE" ? "UNSTABLE" : "UNKNOWN"}
               </span>
             </div>
           ))}

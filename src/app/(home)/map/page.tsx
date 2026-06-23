@@ -45,7 +45,7 @@ export default function MapPage() {
 
   const [mapSearch, setMapSearch] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportStatus, setReportStatus] = useState<"stable" | "outage" | "unstable" | "unknown" | null>(null);
+  const [reportStatus, setReportStatus] = useState<"LIGHT_AVAILABLE" | "LIGHT_OUT" | "LOW_VOLTAGE" | "UNKNOWN" | null>(null);
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLegendMobile, setShowLegendMobile] = useState(false);
@@ -82,7 +82,7 @@ export default function MapPage() {
       // Custom visual detail simulation to match the third mockup exactly
       let timeAgo = "No recent data";
       let detailLabel = "";
-      let confirmsCount = areaReports.reduce((sum, r) => sum + r.confirmations_count, 0);
+      let confirmsCount = areaReports.reduce((sum, r) => sum + r.confidence_score, 0);
 
       const latestReport = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
@@ -96,7 +96,7 @@ export default function MapPage() {
       if (area.name === "Yaba") {
         timeAgo = "Last updated: 2 mins ago";
         detailLabel = "124 community confirmations";
-        if (status === "stable") confirmsCount = 124;
+        if (status === "LIGHT_AVAILABLE") confirmsCount = 124;
       } else if (area.name === "Sabo") {
         timeAgo = "Last updated: 14 mins ago";
         detailLabel = "Reported by 48 users nearby";
@@ -308,9 +308,9 @@ export default function MapPage() {
   };
 
   const getBadgeColor = (status: string) => {
-    if (status === "stable") return "text-emerald-500 bg-emerald-50 border-emerald-100/50";
-    if (status === "outage") return "text-red-500 bg-red-50 border-red-100/50";
-    if (status === "unstable") return "text-amber-500 bg-amber-50 border-amber-100/50";
+    if (status === "LIGHT_AVAILABLE") return "text-emerald-500 bg-emerald-50 border-emerald-100/50";
+    if (status === "LIGHT_OUT") return "text-red-500 bg-red-50 border-red-100/50";
+    if (status === "LOW_VOLTAGE") return "text-amber-500 bg-amber-50 border-amber-100/50";
     return "text-slate-500 bg-slate-50 border-slate-100/50";
   };
 
@@ -366,7 +366,7 @@ export default function MapPage() {
           handleOpenReportModal={handleOpenReportModal}
         />
 
-        {/* Floating Round Buttons at Bottom Right (Only visible on mobile) */}
+        {/* Floating Round Buttons at Bottom Right */}
         <MapActionButtons
           handleDetectLocation={handleDetectLocation}
           handleOpenReportModal={handleOpenReportModal}

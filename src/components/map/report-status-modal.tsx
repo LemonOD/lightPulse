@@ -1,7 +1,7 @@
 "use client";
 
 import { Zap, ZapOff, AlertTriangle, X } from "lucide-react";
-import { Area, ReportStatus } from "@/lib/mockData";
+import { Area, ReportStatus } from "@/lib/types";
 import { getHaversineDistance } from "@/lib/geolocation";
 import { useState, useEffect } from "react";
 import { useAppDispatch } from "@/store";
@@ -10,8 +10,8 @@ interface ReportStatusModalProps {
   showReportModal: boolean;
   setShowReportModal: (val: boolean) => void;
   activeArea: (Area & { status: ReportStatus }) | null;
-  reportStatus: "stable" | "outage" | "unstable" | "unknown" | null;
-  setReportStatus: (status: "stable" | "outage" | "unstable") => void;
+  reportStatus: "LIGHT_AVAILABLE" | "LIGHT_OUT" | "LOW_VOLTAGE" | "UNKNOWN" | null;
+  setReportStatus: (status: "LIGHT_AVAILABLE" | "LIGHT_OUT" | "LOW_VOLTAGE") => void;
   comment: string;
   setComment: (val: string) => void;
   isSubmitting: boolean;
@@ -21,21 +21,21 @@ interface ReportStatusModalProps {
 
 const MODAL_STATUS_BUTTONS = [
   {
-    id: "stable" as const,
+    id: "LIGHT_AVAILABLE" as const,
     name: "Stable",
     icon: Zap,
     activeColor: "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-100",
     hoverColor: "hover:bg-emerald-50 text-emerald-600 border-emerald-100",
   },
   {
-    id: "outage" as const,
+    id: "LIGHT_OUT" as const,
     name: "Outage",
     icon: ZapOff,
     activeColor: "bg-red-500 text-white border-red-500 shadow-md shadow-red-100",
     hoverColor: "hover:bg-red-50 text-red-600 border-red-100",
   },
   {
-    id: "unstable" as const,
+    id: "LOW_VOLTAGE" as const,
     name: "Unstable",
     icon: AlertTriangle,
     activeColor: "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-100",

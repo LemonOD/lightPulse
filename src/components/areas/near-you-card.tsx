@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { Area, ReportStatus } from "@/lib/mockData";
+import { Area, ReportStatus } from "@/lib/types";
 import { StatusBadge, StatusIcon } from "./status-indicators";
 
 export interface NearYouArea extends Area {
@@ -74,7 +74,7 @@ export default function NearYouCard({
                 )}
               </div>
             ) : area.customInfo ? (
-              <span className={`text-[10px] font-extrabold tracking-wide ${area.status === "outage" ? "text-red-500" : "text-amber-500"}`}>
+              <span className={`text-[10px] font-extrabold tracking-wide ${area.status === "LIGHT_OUT" ? "text-red-500" : "text-amber-500"}`}>
                 {area.customInfo}
               </span>
             ) : (
@@ -105,13 +105,13 @@ export default function NearYouCard({
             {area.name}
           </span>
           <span className={`text-[10px] font-bold tracking-wider leading-none ${
-            area.status === "stable" ? "text-emerald-600" :
-            area.status === "outage" ? "text-red-600" :
+            area.status === "LIGHT_AVAILABLE" ? "text-emerald-600" :
+            area.status === "LIGHT_OUT" ? "text-red-600" :
             "text-amber-500"
           }`}>
             STATUS: {
-              area.status === "stable" ? "ONLINE" :
-              area.status === "outage" ? "OUTAGE" :
+              area.status === "LIGHT_AVAILABLE" ? "ONLINE" :
+              area.status === "LIGHT_OUT" ? "OUTAGE" :
               "FLUCTUATING"
             }
           </span>

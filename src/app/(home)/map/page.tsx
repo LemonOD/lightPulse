@@ -272,7 +272,8 @@ export default function MapPage() {
           area_id: activeArea.id,
           area_name: finalAreaName,
           status: reportStatus,
-          comment: comment.trim() || `Status updated to ${reportStatus}`,
+          comment: comment.trim() || `Status updated to ${reportStatus === "LIGHT_AVAILABLE" ? "Light Restored" : reportStatus === "LIGHT_OUT" ? "Light Out" : "Low Voltage"}`,
+          ...(userLocation ? { latitude: userLocation[0], longitude: userLocation[1] } : {}),
         })
       ).unwrap();
 

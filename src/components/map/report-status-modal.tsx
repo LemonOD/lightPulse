@@ -22,21 +22,21 @@ interface ReportStatusModalProps {
 const MODAL_STATUS_BUTTONS = [
   {
     id: "LIGHT_AVAILABLE" as const,
-    name: "Stable",
+    name: "Light Restored",
     icon: Zap,
     activeColor: "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-100",
     hoverColor: "hover:bg-emerald-50 text-emerald-600 border-emerald-100",
   },
   {
     id: "LIGHT_OUT" as const,
-    name: "Outage",
+    name: "Light Out",
     icon: ZapOff,
     activeColor: "bg-red-500 text-white border-red-500 shadow-md shadow-red-100",
     hoverColor: "hover:bg-red-50 text-red-600 border-red-100",
   },
   {
     id: "LOW_VOLTAGE" as const,
-    name: "Unstable",
+    name: "Low Voltage",
     icon: AlertTriangle,
     activeColor: "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-100",
     hoverColor: "hover:bg-amber-50 text-amber-600 border-amber-100",

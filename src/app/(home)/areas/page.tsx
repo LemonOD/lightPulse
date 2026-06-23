@@ -10,6 +10,7 @@ import { getAreaStatusFromReports } from "@/lib/db";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
+import { useAutoLocation } from "@/hooks/use-auto-location";
 
 // Custom Subcomponents
 import AreasHeader from "@/components/areas/areas-header";
@@ -55,36 +56,9 @@ export default function AreasPage() {
     dispatch(setDetectedAreaId(closestArea.id));
   }, [dispatch]);
 
-  // Active location synchronization on page load to populate "Near You" section automatically
-  useEffect(() => {
-    if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
-
-    getPreciseLocation({
-      enableHighAccuracy: true,
-      timeout: 8000,
-      maximumAge: 60000, // 1 minute maximum age to guarantee fresh coordinates
-      fallbackToLowAccuracy: true
-    })
-      .then(([latitude, longitude]) => {
-        const coords: [number, number] = [latitude, longitude];
-
-        // Set location coordinate globals
-        dispatch(setUserLocation(coords));
-
-        // Fetch live actual nearby areas and focus closest
-        fetchLiveNearbyAreas(latitude, longitude, areas);
-      })
-      .catch((error) => {
-        // If denied or timed out, default to Yaba fallback coordinates silently
-        console.log("Silent mount location check failed:", error);
-        if (!userLocation) {
-          const fallbackCoords: [number, number] = [6.5095, 3.3711];
-          dispatch(setUserLocation(fallbackCoords));
-          dispatch(setDetectedAreaId("area-1")); // Default Yaba
-        }
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areas, dispatch]);
+  // Global auto-location: registers GPS position & "My Current Location" from any page
+  // This successfully triggers even if the database is initially empty.
+  useAutoLocation();
 
   // Real GPS Location detection using Geolocation and Nominatim APIs
   const handleDetectLocation = () => {

@@ -37,9 +37,18 @@ export const submitReport = createAsyncThunk(
   "data/submitReport",
   async (
     reportData: Omit<Report, "id" | "created_at" | "confidence_score" | "device_id" | "expires_at">,
-    { rejectWithValue }
+    { rejectWithValue, getState }
   ) => {
     try {
+      // If the area is dynamically generated from location services (OSM/Search/GPS),
+      // we must upsert it into the Supabase database first to satisfy the Foreign Key constraint.
+      const state: any = getState();
+      const activeArea = state.data.areas.find((a: Area) => a.id === reportData.area_id);
+      
+      if (activeArea && (activeArea.id.startsWith("osm-") || activeArea.id.startsWith("search-") || activeArea.id.startsWith("custom-"))) {
+        await dbService.saveCustomArea(activeArea);
+      }
+
       const report = await dbService.createReport(reportData);
       return report;
     } catch (err) {

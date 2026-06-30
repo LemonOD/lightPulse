@@ -18,7 +18,36 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "LightPulse - Community Real-time Power Status Tracker",
-  description: "Check Lagos neighborhood electricity status, report outages, and validate community reports in real time.",
+  description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
+  keywords: ["Nigeria", "Lagos", "power status", "electricity tracking","Light", "PHCN", "NEPA", "blackout tracker", "power outage", "grid update"],
+  openGraph: {
+    title: "LightPulse - Community Real-time Power Status Tracker",
+    description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
+    url: "https://lightpulseapp.org", // Replace with your actual domain when deployed
+    siteName: "LightPulse",
+    images: [
+      {
+        url: "https://lightpulseapp.org/og-image.jpg", // Replace with your actual OG image URL
+        width: 1200,
+        height: 630,
+        alt: "LightPulse Power Status Tracker",
+      }
+    ],
+    locale: "en_NG",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LightPulse - Community Real-time Power Status Tracker",
+    description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
+    images: ["https://lightpulseapp.org/og-image.jpg"],
+  },
+  other: {
+    "geo.region": "NG-LA",
+    "geo.placename": "Lagos",
+    "geo.position": "6.5244;3.3792",
+    "ICBM": "6.5244, 3.3792",
+  }
 };
 
 export default function RootLayout({

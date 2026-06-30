@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setUserLocation } from "@/store/slices/appSlice";
+import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
 import { addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import { getPreciseLocation, reverseGeocodeCoordinates, fetchLiveNearbyAreasFromOSM, getHaversineDistance } from "@/lib/geolocation";
 import { getDeviceId } from "@/lib/device";
@@ -12,10 +12,40 @@ export function useAutoLocation() {
   const areas = useAppSelector((state) => state.data.areas);
   const userLocation = useAppSelector((state) => state.app.userLocation);
   
+  const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
+  
   const hasAttemptedRef = useRef(false);
 
+  // Sync selected area to localStorage so it persists across refreshes
+  const isInitialLoadRef = useRef(true);
   useEffect(() => {
-    if (typeof window === "undefined" || !navigator.geolocation || hasAttemptedRef.current || userLocation) return;
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+    if (selectedAreaId && areas.length > 0) {
+      const activeArea = areas.find((a) => a.id === selectedAreaId);
+      if (activeArea) {
+        localStorage.setItem("lightpulse_saved_area_id", activeArea.id);
+        localStorage.setItem("lightpulse_saved_area_lat", activeArea.lat.toString());
+        localStorage.setItem("lightpulse_saved_area_lng", activeArea.lng.toString());
+      }
+    }
+  }, [selectedAreaId, areas]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || hasAttemptedRef.current) return;
+    hasAttemptedRef.current = true;
+    
+    const savedAreaId = localStorage.getItem("lightpulse_saved_area_id");
+    const savedAreaLat = localStorage.getItem("lightpulse_saved_area_lat");
+    const savedAreaLng = localStorage.getItem("lightpulse_saved_area_lng");
+    
+    if (savedAreaId && savedAreaLat && savedAreaLng) {
+      dispatch(setSelectedAreaId(savedAreaId));
+    }
+
+    if (!navigator.geolocation || userLocation) return;
     
     hasAttemptedRef.current = true;
     
@@ -62,6 +92,22 @@ export function useAutoLocation() {
         };
         
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
+        
+        if (savedAreaId && savedAreaLat && savedAreaLng) {
+          const dist = getHaversineDistance(latitude, longitude, parseFloat(savedAreaLat), parseFloat(savedAreaLng));
+          if (dist > 4) {
+            console.log("User moved significantly. Auto-switching to new closest area.");
+            const closest = [...liveAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
+            if (closest) {
+              dispatch(setSelectedAreaId(closest.id));
+            }
+          }
+        } else {
+          const closest = [...liveAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
+          if (closest) {
+            dispatch(setSelectedAreaId(closest.id));
+          }
+        }
       })
       .catch(async (err) => {
         console.log("Auto-mount geolocator skipped or unauthorized:", err);

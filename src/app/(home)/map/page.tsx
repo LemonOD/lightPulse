@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
+import { getDeviceId } from "@/lib/device";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 
 // Helper utility (already defined in @/lib/geolocation but imported/bound here)
@@ -180,7 +181,7 @@ export default function MapPage() {
         }
 
         const myLocationArea = {
-          id: `custom-loc-gps`,
+          id: `custom-loc-gps-${getDeviceId()}`,
           name: "My Current Location",
           slug: "my-current-location",
           lat: latitude,
@@ -259,7 +260,7 @@ export default function MapPage() {
     try {
       const finalAreaName = customName ? customName.trim() || activeArea.name : activeArea.name;
 
-      if (activeArea.id === "custom-loc-gps" && finalAreaName !== activeArea.name) {
+      if (activeArea.id.startsWith("custom-loc-gps") && finalAreaName !== activeArea.name) {
         await dispatch(saveCustomAreaThunk({
           ...activeArea,
           name: finalAreaName,
@@ -267,7 +268,7 @@ export default function MapPage() {
         }));
       }
 
-      await dispatch(
+      const report = await dispatch(
         submitReport({
           area_id: activeArea.id,
           area_name: finalAreaName,
@@ -277,9 +278,16 @@ export default function MapPage() {
         })
       ).unwrap();
 
-      toast.success(`Power status registered! Thank you for updating ${activeArea.name}.`, {
-        icon: "⚡",
-      });
+      if (report.area_id !== activeArea.id) {
+        dispatch(setSelectedAreaId(report.area_id));
+        toast.success(`Report merged with a nearby community!`, {
+          icon: "🔗",
+        });
+      } else {
+        toast.success(`Power status registered! Thank you for updating ${activeArea.name}.`, {
+          icon: "⚡",
+        });
+      }
 
       setShowReportModal(false);
       setComment("");

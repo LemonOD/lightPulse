@@ -62,7 +62,7 @@ export default function ReportForm() {
 
     setIsSubmitting(true);
     try {
-      await dispatch(
+      const report = await dispatch(
         submitReport({
           area_id: activeArea.id,
           area_name: activeArea.name,
@@ -72,9 +72,16 @@ export default function ReportForm() {
         })
       ).unwrap();
 
-      toast.success(`Power status updated! Thank you for updating ${activeArea.name}.`, {
-        icon: "⚡",
-      });
+      if (report.area_id !== activeArea.id) {
+        dispatch({ type: "app/setSelectedAreaId", payload: report.area_id }); // Using raw action type since it wasn't imported
+        toast.success(`Report merged with a nearby community!`, {
+          icon: "🔗",
+        });
+      } else {
+        toast.success(`Power status updated! Thank you for updating ${activeArea.name}.`, {
+          icon: "⚡",
+        });
+      }
     } catch (err) {
       console.error("Failed to submit report:", err);
       toast.error("Failed to register power status. Please try again.");

@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { setUserLocation } from "@/store/slices/appSlice";
 import { addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import { getPreciseLocation, reverseGeocodeCoordinates, fetchLiveNearbyAreasFromOSM, getHaversineDistance } from "@/lib/geolocation";
+import { getDeviceId } from "@/lib/device";
 
 export function useAutoLocation() {
   const dispatch = useAppDispatch();
@@ -63,7 +64,7 @@ export function useAutoLocation() {
         }
 
         const myLocationArea = {
-          id: `custom-loc-gps`,
+          id: `custom-loc-gps-${getDeviceId()}`,
           name: "My Current Location",
           slug: "my-current-location",
           lat: latitude,
@@ -75,8 +76,17 @@ export function useAutoLocation() {
         // Dispatch custom location and OSM locations to UI state
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
       })
-      .catch((err) => {
+      .catch(async (err) => {
         console.log("Auto-mount geolocator skipped or unauthorized:", err);
+        // Fallback coordinates (Yaba central) so the app remains lively
+        const fallbackCoords: [number, number] = [6.5095, 3.3711];
+        dispatch(setUserLocation(fallbackCoords));
+        
+        // Fetch live actual nearby areas/streets from OpenStreetMap for the fallback location
+        const liveAreas = await fetchLiveNearbyAreasFromOSM(fallbackCoords[0], fallbackCoords[1]);
+        if (liveAreas.length > 0) {
+          dispatch(addLiveAreas(liveAreas));
+        }
       });
   }, [areas.length, dispatch, userLocation]);
 }

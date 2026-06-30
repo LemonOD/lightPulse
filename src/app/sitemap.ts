@@ -1,7 +1,6 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // Replace this URL with your actual production URL
   const baseUrl = 'https://lightpulseapp.org';
 
   return [

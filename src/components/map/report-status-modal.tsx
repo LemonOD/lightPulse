@@ -70,11 +70,10 @@ export default function ReportStatusModal({
   if (!showReportModal || !activeArea || !mounted) return null;
 
   const distance = userLocation ? getHaversineDistance(userLocation[0], userLocation[1], activeArea.lat, activeArea.lng) : null;
-  const isTooFar = distance !== null && distance > 15;
+  const isTooFar = distance !== null && distance > 4;
 
   return createPortal(
     <div className="fixed inset-0 z-9999 flex items-center justify-center px-4">
-      {/* Backdrop blur */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
         onClick={() => setShowReportModal(false)}
@@ -98,7 +97,6 @@ export default function ReportStatusModal({
         </div>
 
         <form onSubmit={(e) => handleReportSubmit(e, (activeArea.id?.startsWith("custom-loc-gps") || activeArea.name === "My Current Location") ? customAreaName : undefined)} className="flex flex-col gap-5">
-          {/* Status Select Grid */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               Select Status
@@ -143,7 +141,6 @@ export default function ReportStatusModal({
             </div>
           )}
 
-          {/* Comment text area */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               Add Details

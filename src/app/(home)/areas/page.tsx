@@ -12,7 +12,6 @@ import { toast } from "react-hot-toast";
 import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 
-// Custom Subcomponents
 import AreasHeader from "@/components/areas/areas-header";
 import NearYouGrid from "@/components/areas/near-you-grid";
 import AllAreasDirectory from "@/components/areas/all-areas-directory";
@@ -31,16 +30,13 @@ export default function AreasPage() {
   const userLocation = useAppSelector((state) => state.app.userLocation);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Helper to fetch live actual nearby areas/estates/streets from OpenStreetMap Nominatim Bounding Box API
   const fetchLiveNearbyAreas = useCallback(async (lat: number, lon: number, currentAreas: typeof areas) => {
     const liveAreas = await fetchLiveNearbyAreasFromOSM(lat, lon);
     
     if (liveAreas.length > 0) {
-      // Dispatch live actual areas to Redux
       dispatch(addLiveAreas(liveAreas));
     }
 
-    // Compute closest area from combined list
     const combined = [...currentAreas, ...liveAreas];
     let closestArea = combined[0];
     let minDistance = Infinity;
@@ -56,11 +52,9 @@ export default function AreasPage() {
     dispatch(setDetectedAreaId(closestArea.id));
   }, [dispatch]);
 
-  // Global auto-location: registers GPS position & "My Current Location" from any page
-  // This successfully triggers even if the database is initially empty.
+
   useAutoLocation();
 
-  // Real GPS Location detection using Geolocation and Nominatim APIs
   const handleDetectLocation = () => {
     if (typeof window === "undefined" || !navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser.");
@@ -80,16 +74,12 @@ export default function AreasPage() {
         dispatch(setIsLocating(false));
         const coords: [number, number] = [latitude, longitude];
 
-        // Store globally in Redux
         dispatch(setUserLocation(coords));
 
-        // Fetch live actual nearby areas and focus closest
         await fetchLiveNearbyAreas(latitude, longitude, areas);
 
-        // Dismiss loading toast
         toast.dismiss(toastId);
 
-        // Attempt reverse geocoding via smart client helper (Google-prioritized)
         try {
           const lgaName = await reverseGeocodeCoordinates(latitude, longitude);
           toast.success(`GPS Located near ${lgaName}!`, {
@@ -109,7 +99,6 @@ export default function AreasPage() {
         toast.dismiss(toastId);
         console.error("Geolocation error:", error);
 
-        // Fallback coordinates (Yaba central: [6.5095, 3.3711])
         const fallbackCoords: [number, number] = [6.5095, 3.3711];
         dispatch(setUserLocation(fallbackCoords));
         dispatch(setDetectedAreaId("area-1")); // Yaba
@@ -128,23 +117,27 @@ export default function AreasPage() {
 
   const handleSelectArea = (areaId: string) => {
     dispatch(setSelectedAreaId(areaId));
-    // Smooth transition redirect back to home dashboard
     router.push("/");
   };
 
-  // Compute status for all areas
   const areasWithStatus = useMemo(() => {
-    return areas.map(area => {
+    const uniqueAreasMap = new Map<string, typeof areas[0]>();
+    areas.forEach(a => {
+      if (!uniqueAreasMap.has(a.name)) {
+        uniqueAreasMap.set(a.name, a);
+      }
+    });
+    const uniqueAreas = Array.from(uniqueAreasMap.values());
+
+    return uniqueAreas.map(area => {
       const status = getAreaStatusFromReports(area.id, reports);
       const areaReports = reports.filter(r => r.area_id === area.id);
 
-      // Calculate dynamic metadata
       const latestReport = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
       const timeAgo = latestReport
         ? getRelativeMinutes(latestReport.created_at)
         : null;
 
-      // Confirmations sum
       const totalConfirms = areaReports.reduce((sum, r) => sum + r.confidence_score, 0);
 
       return {
@@ -157,7 +150,6 @@ export default function AreasPage() {
     });
   }, [areas, reports]);
 
-  // Filtered areas based on search query
   const filteredAreas = useMemo(() => {
     if (!searchQuery.trim()) return areasWithStatus;
     const query = searchQuery.toLowerCase().trim();
@@ -166,10 +158,8 @@ export default function AreasPage() {
     );
   }, [areasWithStatus, searchQuery]);
 
-  // Proximity "Near You" areas matching Design 1, dynamically calculated if GPS context exists
   const nearYouAreas = useMemo(() => {
     if (userLocation) {
-      // Calculate distances for all areas and sort them by physical proximity
       const areasWithDist = areasWithStatus.map(a => {
         const distance = getHaversineDistance(userLocation[0], userLocation[1], a.lat, a.lng);
         return {
@@ -185,15 +175,12 @@ export default function AreasPage() {
         };
       });
 
-      // Sort by physical proximity and take the 3 closest ones!
       return areasWithDist.sort((a, b) => a.distance - b.distance).slice(0, 3);
     }
 
-    // Return hardcoded Yaba Tech, Adeniran Ogunsanya, Akoka Finbarrs for Design 1 fidelity when location not loaded
     const targets = ["Yaba Tech", "Adeniran Ogunsanya", "Akoka Finbarrs"];
     const baseList = areasWithStatus.filter(a => targets.includes(a.name));
 
-    // Add realistic visual mockup overrides if data is fresh
     return baseList.map(a => {
       if (a.name === "Yaba Tech") {
         return {
@@ -221,7 +208,6 @@ export default function AreasPage() {
           distance: 2.1
         };
       }
-      // Akoka Finbarrs
       return {
         ...a,
         timeAgo: "Updated 15m ago",
@@ -234,7 +220,6 @@ export default function AreasPage() {
     });
   }, [areasWithStatus, userLocation]);
 
-  // Alphabetical grouping for the directory
   const alphabetizedGroups = useMemo(() => {
     const groups: Record<string, typeof filteredAreas> = {};
 
@@ -246,7 +231,6 @@ export default function AreasPage() {
       groups[firstLetter].push(area);
     });
 
-    // Sort letters and sorting inside lists
     return Object.keys(groups)
       .sort()
       .reduce((acc, letter) => {
@@ -263,7 +247,6 @@ export default function AreasPage() {
   return (
     <main className="flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 pb-32">
       
-      {/* 1. Header Title & Search Input component */}
       <AreasHeader
         searchQuery={searchQuery}
         onSearchChange={(val) => dispatch(setSearchQuery(val))}
@@ -271,7 +254,6 @@ export default function AreasPage() {
         isLocating={isLocating}
       />
 
-      {/* 2. Near You Grid component */}
       {!searchQuery && (
         <NearYouGrid
           nearYouAreas={nearYouAreas}
@@ -281,7 +263,6 @@ export default function AreasPage() {
         />
       )}
 
-      {/* 3. Alphabetized Directory List component */}
       <AllAreasDirectory
         alphabetizedGroups={alphabetizedGroups}
         selectedAreaId={selectedAreaId}
@@ -291,13 +272,11 @@ export default function AreasPage() {
         searchQuery={searchQuery}
       />
 
-      {/* 4. Mobile Sticky Detect Location capsule */}
       <MobileLocationButton
         handleDetectLocation={handleDetectLocation}
         isLocating={isLocating}
       />
 
-      {/* Floating Centered Desktop Live Map Button */}
       <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 hidden md:block">
         <Link
           href="/map"

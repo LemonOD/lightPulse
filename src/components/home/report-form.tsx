@@ -50,7 +50,7 @@ export default function ReportForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittingStatus, setSubmittingStatus] = useState<ReportStatus | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [modalStatus, setModalStatus] = useState<"LIGHT_AVAILABLE" | "LIGHT_OUT" | "LOW_VOLTAGE" | null>(null);
+  const [modalStatus, setModalStatus] = useState<ReportStatus | null>(null);
   const [comment, setComment] = useState("");
 
   const activeArea = areas.find(a => a.id === selectedAreaId) || areas[0] || { name: "Lagos Mainland", id: "" };

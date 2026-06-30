@@ -70,7 +70,7 @@ export default function ReportStatusModal({
   if (!showReportModal || !activeArea || !mounted) return null;
 
   const distance = userLocation ? getHaversineDistance(userLocation[0], userLocation[1], activeArea.lat, activeArea.lng) : null;
-  const isTooFar = distance !== null && distance > 15;
+  const isTooFar = distance !== null && distance > 4;
 
   return createPortal(
     <div className="fixed inset-0 z-9999 flex items-center justify-center px-4">

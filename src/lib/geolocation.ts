@@ -128,7 +128,7 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
     if (response.ok) {
       const data = await response.json();
       const address = data.address || {};
-      return address.county || address.city_district || address.suburb || address.neighbourhood || address.city || "Lagos";
+      return address.neighbourhood || address.suburb || address.city_district || address.town || address.village || address.road || address.county || address.city || "Lagos";
     }
   } catch (err) {
     console.error("OSM Reverse Geocoding failed:", err);
@@ -150,7 +150,7 @@ export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Pro
     if (response.ok) {
       const data = await response.json();
       const address = data.address || {};
-      const name = address.road || address.neighbourhood || address.suburb || address.village || address.city_district;
+      const name = address.neighbourhood || address.suburb || address.city_district || address.road || address.town || address.village || address.county;
       
       if (name) {
         const desc = [address.city || address.county, address.state].filter(Boolean).join(", ") || "Lagos, Nigeria";

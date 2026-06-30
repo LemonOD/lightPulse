@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { submitReport } from "@/store/slices/dataSlice";
-import { Zap, ZapOff, AlertTriangle, LucideIcon } from "lucide-react";
+import { Zap, ZapOff, AlertTriangle, Loader2, LucideIcon } from "lucide-react";
 import { ReportStatus } from "@/lib/types";
 import { toast } from "react-hot-toast";
+import ReportStatusModal from "@/components/map/report-status-modal";
 
 const BASE_BUTTON_CLASS =
   "flex flex-col items-center justify-center gap-2.5 py-4.5 rounded-2xl font-extrabold text-[11px] tracking-wide text-white transition-all duration-300 transform active:scale-95 shadow-sm cursor-pointer disabled:opacity-75";
@@ -47,6 +48,10 @@ export default function ReportForm() {
   const userLocation = useAppSelector((state) => state.app.userLocation);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingStatus, setSubmittingStatus] = useState<ReportStatus | null>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [modalStatus, setModalStatus] = useState<ReportStatus | null>(null);
+  const [comment, setComment] = useState("");
 
   const activeArea = areas.find(a => a.id === selectedAreaId) || areas[0] || { name: "Lagos Mainland", id: "" };
 
@@ -60,7 +65,20 @@ export default function ReportForm() {
   const handleStatusSelect = async (status: ReportStatus) => {
     if (!activeArea.id || isSubmitting) return;
 
+    // Check if it's the unresolved "My Current Location" or GPS fallback
+    if (activeArea.name === "My Current Location") {
+      setModalStatus(status);
+      setComment(getDefaultComment(status));
+      setShowReportModal(true);
+      return;
+    }
+
+    await submitReportDirectly(status, activeArea.name);
+  };
+
+  const submitReportDirectly = async (status: ReportStatus, areaName: string) => {
     setIsSubmitting(true);
+    setSubmittingStatus(status);
     try {
       const report = await dispatch(
         submitReport({
@@ -78,7 +96,7 @@ export default function ReportForm() {
           icon: "🔗",
         });
       } else {
-        toast.success(`Power status updated! Thank you for updating ${activeArea.name}.`, {
+        toast.success(`Power status updated! Thank you for updating ${areaName}.`, {
           icon: "⚡",
         });
       }
@@ -87,7 +105,16 @@ export default function ReportForm() {
       toast.error("Failed to register power status. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setSubmittingStatus(null);
     }
+  };
+
+  const handleModalSubmit = async (e: React.FormEvent, customName?: string) => {
+    e.preventDefault();
+    if (!activeArea.id || isSubmitting || !modalStatus) return;
+    
+    setShowReportModal(false);
+    await submitReportDirectly(modalStatus, customName || activeArea.name);
   };
 
   return (
@@ -99,20 +126,39 @@ export default function ReportForm() {
 
       {/* 3-Column colored buttons layout exactly matching screenshot */}
       <div className="grid grid-cols-3 gap-3">
-        {REPORT_STATUS_CONFIG.map(({ status, label, icon: Icon, bgClass, iconClass }) => (
-          <button
-            key={status}
-            type="button"
-            onClick={() => handleStatusSelect(status)}
-            disabled={isSubmitting}
-            className={`${BASE_BUTTON_CLASS} ${bgClass}`}
-          >
-            <Icon className={`h-6 w-6 stroke-[2.25] ${iconClass || ""}`} />
-            <span>{label}</span>
-          </button>
-        ))}
+        {REPORT_STATUS_CONFIG.map(({ status, label, icon: Icon, bgClass, iconClass }) => {
+          const isThisSubmitting = isSubmitting && submittingStatus === status;
+          return (
+            <button
+              key={status}
+              type="button"
+              onClick={() => handleStatusSelect(status)}
+              disabled={isSubmitting}
+              className={`${BASE_BUTTON_CLASS} ${bgClass}`}
+            >
+              {isThisSubmitting ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                <Icon className={`h-6 w-6 stroke-[2.25] ${iconClass || ""}`} />
+              )}
+              <span>{label}</span>
+            </button>
+          );
+        })}
       </div>
 
+      <ReportStatusModal
+        showReportModal={showReportModal}
+        setShowReportModal={setShowReportModal}
+        activeArea={activeArea as any}
+        reportStatus={modalStatus}
+        setReportStatus={setModalStatus as any}
+        comment={comment}
+        setComment={setComment}
+        isSubmitting={isSubmitting}
+        handleReportSubmit={handleModalSubmit}
+        userLocation={userLocation}
+      />
     </div>
   );
 }

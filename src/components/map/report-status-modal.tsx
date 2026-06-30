@@ -1,9 +1,10 @@
 "use client";
 
-import { Zap, ZapOff, AlertTriangle, X } from "lucide-react";
+import { Zap, ZapOff, AlertTriangle, X, Loader2 } from "lucide-react";
 import { Area, ReportStatus } from "@/lib/types";
 import { getHaversineDistance } from "@/lib/geolocation";
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useAppDispatch } from "@/store";
 
 interface ReportStatusModalProps {
@@ -57,20 +58,22 @@ export default function ReportStatusModal({
 }: ReportStatusModalProps) {
   const dispatch = useAppDispatch();
   const [customAreaName, setCustomAreaName] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (activeArea?.id === "custom-loc-gps") {
+    setMounted(true);
+    if (activeArea?.id?.startsWith("custom-loc-gps") || activeArea?.name === "My Current Location") {
       setCustomAreaName(activeArea.name !== "My Current Location" ? activeArea.name : "");
     }
   }, [activeArea]);
 
-  if (!showReportModal || !activeArea) return null;
+  if (!showReportModal || !activeArea || !mounted) return null;
 
   const distance = userLocation ? getHaversineDistance(userLocation[0], userLocation[1], activeArea.lat, activeArea.lng) : null;
-  const isTooFar = distance !== null && distance > 3;
+  const isTooFar = distance !== null && distance > 15;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+  return createPortal(
+    <div className="fixed inset-0 z-9999 flex items-center justify-center px-4">
       {/* Backdrop blur */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
@@ -94,7 +97,7 @@ export default function ReportStatusModal({
           </h3>
         </div>
 
-        <form onSubmit={(e) => handleReportSubmit(e, activeArea.id === "custom-loc-gps" ? customAreaName : undefined)} className="flex flex-col gap-5">
+        <form onSubmit={(e) => handleReportSubmit(e, (activeArea.id?.startsWith("custom-loc-gps") || activeArea.name === "My Current Location") ? customAreaName : undefined)} className="flex flex-col gap-5">
           {/* Status Select Grid */}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
@@ -123,7 +126,7 @@ export default function ReportStatusModal({
             </div>
           </div>
 
-          {activeArea.id === "custom-loc-gps" && (
+          {(activeArea.id?.startsWith("custom-loc-gps") || activeArea.name === "My Current Location") && (
             <div className="flex flex-col gap-2 mb-1">
               <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
                 Location Name (Optional)
@@ -166,10 +169,12 @@ export default function ReportStatusModal({
             disabled={isSubmitting || !reportStatus || isTooFar}
             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 mt-2 cursor-pointer"
           >
-            <span>Submit Report</span>
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <span>{isSubmitting ? "Submitting..." : "Submit Report"}</span>
           </button>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

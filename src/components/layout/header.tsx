@@ -15,48 +15,11 @@ export default function Header() {
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
   const areas = useAppSelector((state) => state.data.areas);
 
-  // Silent automatic geolocation query on mount to update user-specific header coordinates
-  useEffect(() => {
-    if (typeof window === "undefined" || !navigator.geolocation || areas.length === 0) return;
-
-    getPreciseLocation({
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 120000, // 2 minutes cache
-      fallbackToLowAccuracy: true
-    })
-      .then(([latitude, longitude]) => {
-        const coords: [number, number] = [latitude, longitude];
-
-        // Store location coordinates globally
-        dispatch(setUserLocation(coords));
-
-        // Find mathematically closest seeded neighborhood
-        let closestArea = areas[0];
-        let minDistance = Infinity;
-
-        areas.forEach((area) => {
-          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestArea = area;
-          }
-        });
-
-        // Set selected area to auto-calibrate header label
-        dispatch(setSelectedAreaId(closestArea.id));
-      })
-      .catch((err) => {
-        // Fail silently without disturbing UX on startup if geolocation not allowed yet
-        console.log("Auto-mount geolocator skipped or unauthorized:", err);
-      });
-  }, [areas, dispatch]);
+  // Removed silent automatic geolocation query on mount to respect user privacy and avoid prompt on load
 
   // Dynamically resolve exact focused location name
   const activeArea = areas.find((a) => a.id === selectedAreaId);
-  const locationLabel = activeArea 
-    ? (activeArea.name === "Yaba" ? "Yaba Tech" : activeArea.name) 
-    : currentRegion;
+  const locationLabel = activeArea ? activeArea.name: currentRegion;
 
   const navigation = [
     { name: "Home", href: "/" },

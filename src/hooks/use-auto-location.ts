@@ -16,15 +16,11 @@ export function useAutoLocation() {
   const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
-    // Note: We removed `areas.length === 0` from the early return condition 
-    // so we CAN seed the first area if the db is empty.
+    // We fetch the location silently. This will trigger the browser permission prompt if they haven't allowed it yet.
     if (typeof window === "undefined" || !navigator.geolocation || hasAttemptedRef.current || userLocation) return;
     
-    // Only attempt if we have loaded areas from DB (even if empty) to avoid race conditions.
-    // If state.data.loading is true, maybe wait, but let's assume it has fired or is firing.
-    
     hasAttemptedRef.current = true;
-
+    
     getPreciseLocation({
       enableHighAccuracy: true,
       timeout: 8000,
@@ -34,7 +30,7 @@ export function useAutoLocation() {
       .then(async ([latitude, longitude]) => {
         const coords: [number, number] = [latitude, longitude];
 
-        // Store location coordinates globally in Redux
+        // Store location coordinates globally in Redux for precise reporting distance calcs
         dispatch(setUserLocation(coords));
 
         let lgaName = "Your Exact Location";
@@ -48,9 +44,7 @@ export function useAutoLocation() {
         const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
 
         // If the database is completely empty, automatically save the nearest identified OSM area to the database
-        // so the user doesn't face an empty "Unknown Location" anxiety.
         if (areas.length === 0 && liveAreas.length > 0) {
-          // Find the closest one
           const closestArea = [...liveAreas].sort((a, b) => {
              const distA = getHaversineDistance(latitude, longitude, a.lat, a.lng);
              const distB = getHaversineDistance(latitude, longitude, b.lat, b.lng);
@@ -58,7 +52,6 @@ export function useAutoLocation() {
           })[0];
           
           if (closestArea) {
-             // Save it to Supabase via Thunk
              dispatch(saveCustomAreaThunk(closestArea));
           }
         }
@@ -73,14 +66,16 @@ export function useAutoLocation() {
           region: "Custom Location",
         };
         
-        // Dispatch custom location and OSM locations to UI state
+        // Dispatch custom location and OSM locations to UI state so they can be selected if desired
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
       })
       .catch(async (err) => {
         console.log("Auto-mount geolocator skipped or unauthorized:", err);
-        // Fallback coordinates (Yaba central) so the app remains lively
+        // Fallback coordinates (Yaba central) so the app remains lively if they don't have location
         const fallbackCoords: [number, number] = [6.5095, 3.3711];
-        dispatch(setUserLocation(fallbackCoords));
+        if (!userLocation) {
+          dispatch(setUserLocation(fallbackCoords));
+        }
         
         // Fetch live actual nearby areas/streets from OpenStreetMap for the fallback location
         const liveAreas = await fetchLiveNearbyAreasFromOSM(fallbackCoords[0], fallbackCoords[1]);
@@ -88,5 +83,6 @@ export function useAutoLocation() {
           dispatch(addLiveAreas(liveAreas));
         }
       });
+
   }, [areas.length, dispatch, userLocation]);
 }

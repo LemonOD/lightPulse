@@ -6,6 +6,7 @@ import { submitReport } from "@/store/slices/dataSlice";
 import { Zap, ZapOff, AlertTriangle, LucideIcon } from "lucide-react";
 import { ReportStatus } from "@/lib/types";
 import { toast } from "react-hot-toast";
+import ReportStatusModal from "@/components/map/report-status-modal";
 
 const BASE_BUTTON_CLASS =
   "flex flex-col items-center justify-center gap-2.5 py-4.5 rounded-2xl font-extrabold text-[11px] tracking-wide text-white transition-all duration-300 transform active:scale-95 shadow-sm cursor-pointer disabled:opacity-75";
@@ -47,6 +48,9 @@ export default function ReportForm() {
   const userLocation = useAppSelector((state) => state.app.userLocation);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [modalStatus, setModalStatus] = useState<"LIGHT_AVAILABLE" | "LIGHT_OUT" | "LOW_VOLTAGE" | null>(null);
+  const [comment, setComment] = useState("");
 
   const activeArea = areas.find(a => a.id === selectedAreaId) || areas[0] || { name: "Lagos Mainland", id: "" };
 
@@ -60,6 +64,18 @@ export default function ReportForm() {
   const handleStatusSelect = async (status: ReportStatus) => {
     if (!activeArea.id || isSubmitting) return;
 
+    // Check if it's the unresolved "My Current Location" or GPS fallback
+    if (activeArea.name === "My Current Location") {
+      setModalStatus(status);
+      setComment(getDefaultComment(status));
+      setShowReportModal(true);
+      return;
+    }
+
+    await submitReportDirectly(status, activeArea.name);
+  };
+
+  const submitReportDirectly = async (status: ReportStatus, areaName: string) => {
     setIsSubmitting(true);
     try {
       const report = await dispatch(
@@ -78,7 +94,7 @@ export default function ReportForm() {
           icon: "🔗",
         });
       } else {
-        toast.success(`Power status updated! Thank you for updating ${activeArea.name}.`, {
+        toast.success(`Power status updated! Thank you for updating ${areaName}.`, {
           icon: "⚡",
         });
       }
@@ -88,6 +104,14 @@ export default function ReportForm() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleModalSubmit = async (e: React.FormEvent, customName?: string) => {
+    e.preventDefault();
+    if (!activeArea.id || isSubmitting || !modalStatus) return;
+    
+    setShowReportModal(false);
+    await submitReportDirectly(modalStatus, customName || activeArea.name);
   };
 
   return (
@@ -113,6 +137,18 @@ export default function ReportForm() {
         ))}
       </div>
 
+      <ReportStatusModal
+        showReportModal={showReportModal}
+        setShowReportModal={setShowReportModal}
+        activeArea={activeArea as any}
+        reportStatus={modalStatus}
+        setReportStatus={setModalStatus as any}
+        comment={comment}
+        setComment={setComment}
+        isSubmitting={isSubmitting}
+        handleReportSubmit={handleModalSubmit}
+        userLocation={userLocation}
+      />
     </div>
   );
 }

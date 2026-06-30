@@ -26,11 +26,16 @@ export default function StatusCard() {
   }, [areaReports24h]);
 
   const currentStatus = useMemo(() => {
-    // Rely on backend aggregated status if available, else compute optimistic
+    // Prioritize computed status from local reports (which includes newly submitted reports immediately)
+    const computedStatus = getAreaStatusFromReports(activeArea.id, reports);
+    if (computedStatus !== "UNKNOWN") {
+      return computedStatus;
+    }
+    // Fallback to the cached backend aggregated status
     if (activeArea.current_status && activeArea.current_status !== "UNKNOWN") {
       return activeArea.current_status;
     }
-    return getAreaStatusFromReports(activeArea.id, reports);
+    return "UNKNOWN";
   }, [activeArea.current_status, activeArea.id, reports]);
 
   // Metrics

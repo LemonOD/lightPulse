@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { setUserLocation } from "@/store/slices/appSlice";
 import { addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import { getPreciseLocation, reverseGeocodeCoordinates, fetchLiveNearbyAreasFromOSM, getHaversineDistance } from "@/lib/geolocation";
+import { getDeviceId } from "@/lib/device";
 
 export function useAutoLocation() {
   const dispatch = useAppDispatch();
@@ -63,7 +64,7 @@ export function useAutoLocation() {
         }
 
         const myLocationArea = {
-          id: `custom-loc-gps`,
+          id: `custom-loc-gps-${getDeviceId()}`,
           name: "My Current Location",
           slug: "my-current-location",
           lat: latitude,

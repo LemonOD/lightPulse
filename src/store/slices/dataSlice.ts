@@ -45,7 +45,7 @@ export const submitReport = createAsyncThunk(
       const state: any = getState();
       const activeArea = state.data.areas.find((a: Area) => a.id === reportData.area_id);
       
-      if (activeArea && (activeArea.id.startsWith("osm-") || activeArea.id.startsWith("search-") || activeArea.id.startsWith("custom-"))) {
+      if (activeArea && (activeArea.id.startsWith("osm-") || activeArea.id.startsWith("search-") || activeArea.id.startsWith("custom-") || activeArea.id.startsWith("live-"))) {
         await dbService.saveCustomArea(activeArea);
       }
 

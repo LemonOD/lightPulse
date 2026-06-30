@@ -23,11 +23,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "LightPulse - Community Real-time Power Status Tracker",
     description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
-    url: "https://lightpulseapp.org", // Replace with your actual domain when deployed
+    url: "https://lightpulseapp.org",
     siteName: "LightPulse",
     images: [
       {
-        url: "https://lightpulseapp.org/og-image.jpg", // Replace with your actual OG image URL
+        url: "https://lightpulseapp.org/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "LightPulse Power Status Tracker",

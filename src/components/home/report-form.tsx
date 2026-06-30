@@ -65,7 +65,6 @@ export default function ReportForm() {
   const handleStatusSelect = async (status: ReportStatus) => {
     if (!activeArea.id || isSubmitting) return;
 
-    // Check if it's the unresolved "My Current Location" or GPS fallback
     if (activeArea.name === "My Current Location") {
       setModalStatus(status);
       setComment(getDefaultComment(status));
@@ -91,7 +90,7 @@ export default function ReportForm() {
       ).unwrap();
 
       if (report.area_id !== activeArea.id) {
-        dispatch({ type: "app/setSelectedAreaId", payload: report.area_id }); // Using raw action type since it wasn't imported
+        dispatch({ type: "app/setSelectedAreaId", payload: report.area_id });
         toast.success(`Report merged with a nearby community!`, {
           icon: "🔗",
         });
@@ -119,12 +118,10 @@ export default function ReportForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Title */}
       <h3 className="text-sm font-medium text-slate-800 tracking-tight">
         What&apos;s the status now?
       </h3>
 
-      {/* 3-Column colored buttons layout exactly matching screenshot */}
       <div className="grid grid-cols-3 gap-3">
         {REPORT_STATUS_CONFIG.map(({ status, label, icon: Icon, bgClass, iconClass }) => {
           const isThisSubmitting = isSubmitting && submittingStatus === status;

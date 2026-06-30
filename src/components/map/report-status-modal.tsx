@@ -1,6 +1,6 @@
 "use client";
 
-import { Zap, ZapOff, AlertTriangle, X } from "lucide-react";
+import { Zap, ZapOff, AlertTriangle, X, Loader2 } from "lucide-react";
 import { Area, ReportStatus } from "@/lib/types";
 import { getHaversineDistance } from "@/lib/geolocation";
 import { useState, useEffect } from "react";
@@ -169,7 +169,8 @@ export default function ReportStatusModal({
             disabled={isSubmitting || !reportStatus || isTooFar}
             className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 mt-2 cursor-pointer"
           >
-            <span>Submit Report</span>
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+            <span>{isSubmitting ? "Submitting..." : "Submit Report"}</span>
           </button>
         </form>
       </div>

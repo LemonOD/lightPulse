@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { submitReport } from "@/store/slices/dataSlice";
-import { Zap, ZapOff, AlertTriangle, LucideIcon } from "lucide-react";
+import { Zap, ZapOff, AlertTriangle, Loader2, LucideIcon } from "lucide-react";
 import { ReportStatus } from "@/lib/types";
 import { toast } from "react-hot-toast";
 import ReportStatusModal from "@/components/map/report-status-modal";
@@ -48,6 +48,7 @@ export default function ReportForm() {
   const userLocation = useAppSelector((state) => state.app.userLocation);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingStatus, setSubmittingStatus] = useState<ReportStatus | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [modalStatus, setModalStatus] = useState<"LIGHT_AVAILABLE" | "LIGHT_OUT" | "LOW_VOLTAGE" | null>(null);
   const [comment, setComment] = useState("");
@@ -77,6 +78,7 @@ export default function ReportForm() {
 
   const submitReportDirectly = async (status: ReportStatus, areaName: string) => {
     setIsSubmitting(true);
+    setSubmittingStatus(status);
     try {
       const report = await dispatch(
         submitReport({
@@ -103,6 +105,7 @@ export default function ReportForm() {
       toast.error("Failed to register power status. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setSubmittingStatus(null);
     }
   };
 
@@ -123,18 +126,25 @@ export default function ReportForm() {
 
       {/* 3-Column colored buttons layout exactly matching screenshot */}
       <div className="grid grid-cols-3 gap-3">
-        {REPORT_STATUS_CONFIG.map(({ status, label, icon: Icon, bgClass, iconClass }) => (
-          <button
-            key={status}
-            type="button"
-            onClick={() => handleStatusSelect(status)}
-            disabled={isSubmitting}
-            className={`${BASE_BUTTON_CLASS} ${bgClass}`}
-          >
-            <Icon className={`h-6 w-6 stroke-[2.25] ${iconClass || ""}`} />
-            <span>{label}</span>
-          </button>
-        ))}
+        {REPORT_STATUS_CONFIG.map(({ status, label, icon: Icon, bgClass, iconClass }) => {
+          const isThisSubmitting = isSubmitting && submittingStatus === status;
+          return (
+            <button
+              key={status}
+              type="button"
+              onClick={() => handleStatusSelect(status)}
+              disabled={isSubmitting}
+              className={`${BASE_BUTTON_CLASS} ${bgClass}`}
+            >
+              {isThisSubmitting ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                <Icon className={`h-6 w-6 stroke-[2.25] ${iconClass || ""}`} />
+              )}
+              <span>{label}</span>
+            </button>
+          );
+        })}
       </div>
 
       <ReportStatusModal

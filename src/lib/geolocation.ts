@@ -141,50 +141,56 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
  */
 export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Promise<Area[]> {
   try {
-    const minLat = lat - 0.015;
-    const maxLat = lat + 0.015;
-    const minLon = lon - 0.015;
-    const maxLon = lon + 0.015;
+    // Generate 3 points roughly 300-500 meters away in different directions
+    const points = [
+      { lat: lat + 0.004, lon: lon + 0.004 }, // North-East
+      { lat: lat - 0.004, lon: lon - 0.003 }, // South-West
+      { lat: lat + 0.003, lon: lon - 0.004 }, // North-West
+    ];
 
-    const osmUrl = `https://nominatim.openstreetmap.org/search?format=jsonv2&viewbox=${minLon},${maxLat},${maxLon},${minLat}&bounded=1&q=street+estate+market+school+plaza+hospital+mall&limit=8`;
-    
-    const response = await fetch(osmUrl, {
-      headers: {
-        "User-Agent": "LightPulse/1.0"
-      }
-    });
-
-    if (response.ok) {
-      const osmData = await response.json();
+    const promises = points.map(async (pt, index) => {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pt.lat}&lon=${pt.lon}`,
+        { headers: { "User-Agent": "LightPulse/1.0" } }
+      );
       
-      if (Array.isArray(osmData) && osmData.length > 0) {
-        interface OSMPlaceItem {
-          place_id: number;
-          name?: string;
-          display_name: string;
-          lat: string;
-          lon: string;
-        }
-
-        return osmData.map((item: OSMPlaceItem) => {
-          const displayNameParts = item.display_name.split(",");
-          const name = item.name || displayNameParts[0];
-          const desc = displayNameParts.slice(1, 4).join(",").trim() || "Lagos, Nigeria";
-          
+      if (response.ok) {
+        const data = await response.json();
+        const address = data.address || {};
+        const name = address.road || address.neighbourhood || address.suburb || address.village || address.city_district;
+        
+        if (name) {
+          const desc = [address.city || address.county, address.state].filter(Boolean).join(", ") || "Lagos, Nigeria";
           return {
-            id: `live-${item.place_id}`,
+            id: `live-geom-${index}-${Date.now()}`,
             name: name,
             slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-            lat: parseFloat(item.lat),
-            lng: parseFloat(item.lon),
+            lat: pt.lat,
+            lng: pt.lon,
             description: desc,
             region: "Near You (GPS Live)"
           };
-        });
+        }
       }
-    }
+      return null;
+    });
+
+    const results = await Promise.all(promises);
+    
+    // Filter nulls and remove duplicate street names
+    const validAreas: Area[] = [];
+    const seenNames = new Set<string>();
+    
+    results.forEach(area => {
+      if (area && !seenNames.has(area.name)) {
+        seenNames.add(area.name);
+        validAreas.push(area);
+      }
+    });
+    
+    return validAreas;
   } catch (osmError) {
-    console.error("OSM Bounding Box search failed:", osmError);
+    console.error("OSM multi-point reverse geocoding failed:", osmError);
   }
   return [];
 }

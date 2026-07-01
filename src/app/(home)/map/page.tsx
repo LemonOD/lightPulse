@@ -9,7 +9,7 @@ import { X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
+import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates, formatDistance } from "@/lib/geolocation";
 import { getDeviceId } from "@/lib/device";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 
@@ -107,7 +107,7 @@ export default function MapPage() {
       let distanceText = "";
       if (userLocation) {
         distanceValue = getHaversineDistance(userLocation[0], userLocation[1], area.lat, area.lng);
-        distanceText = `${distanceValue.toFixed(1)} km away`;
+        distanceText = formatDistance(distanceValue);
         detailLabel = `${distanceText} • ${detailLabel}`;
       }
 

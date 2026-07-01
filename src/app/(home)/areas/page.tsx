@@ -9,7 +9,7 @@ import { Map as MapIcon } from "lucide-react";
 import { getAreaStatusFromReports } from "@/lib/db";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
+import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates, formatDistance } from "@/lib/geolocation";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 
 import AreasHeader from "@/components/areas/areas-header";
@@ -163,7 +163,7 @@ export default function AreasPage() {
           ...a,
           distance,
           timeAgo: a.timeAgo || "Updated just now",
-          customInfo: `${distance.toFixed(1)} km away`,
+          customInfo: formatDistance(distance),
           avatars: [],
           avatarExtra: ""
         };

@@ -78,6 +78,16 @@ export const getHaversineDistance = (lat1: number, lon1: number, lat2: number, l
 };
 
 /**
+ * Formats distance in km to a readable string (e.g. "400 m away" or "1.2 km away")
+ */
+export const formatDistance = (distanceInKm: number): string => {
+  if (distanceInKm < 1) {
+    return `${Math.round(distanceInKm * 1000)} m away`;
+  }
+  return `${distanceInKm.toFixed(1)} km away`;
+};
+
+/**
  * Performs reverse geocoding to resolve a latitude and longitude into a neighborhood or suburb name.
  * Smart hybrid approach:
  * 1. Prioritizes the client-side Google Maps SDK Geocoder if active.

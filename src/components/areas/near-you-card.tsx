@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { Area, ReportStatus } from "@/lib/types";
 import { StatusBadge, StatusIcon } from "./status-indicators";
+import { formatDistance } from "@/lib/geolocation";
 
 export interface NearYouArea extends Area {
   status: ReportStatus;
@@ -52,7 +53,7 @@ export default function NearYouCard({
             <StatusBadge status={area.status} />
             {userLocation && area.distance !== undefined && (
               <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[8px] font-bold text-blue-500 tracking-widest leading-none">
-                {area.distance.toFixed(1)} km away
+                {formatDistance(area.distance)}
               </span>
             )}
           </div>

@@ -10,9 +10,9 @@ interface AppState {
 }
 
 const initialState: AppState = {
-  currentRegion: "Lagos Mainland",
+  currentRegion: "",
   detectedAreaId: null,
-  selectedAreaId: "area-1", // Default Yaba
+  selectedAreaId: null, 
   searchQuery: "",
   isLocating: false,
   userLocation: null,

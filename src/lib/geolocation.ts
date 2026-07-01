@@ -102,12 +102,13 @@ export function reverseGeocodeCoordinates(lat: number, lng: number): Promise<str
         if (status === "OK" && results?.[0]) {
           const components = results[0].address_components || [];
           
+          const route = components.find((c: any) => c.types.includes("route"));
           const neighborhood = components.find((c: any) => c.types.includes("neighborhood"));
           const sublocality = components.find((c: any) => c.types.includes("sublocality") || c.types.includes("sublocality_level_1"));
           const locality = components.find((c: any) => c.types.includes("locality"));
           const lga = components.find((c: any) => c.types.includes("administrative_area_level_2"));
 
-          const resolvedName = neighborhood?.long_name || sublocality?.long_name || locality?.long_name || lga?.long_name || "Unknown Location";
+          const resolvedName = route?.long_name || neighborhood?.long_name || sublocality?.long_name || locality?.long_name || lga?.long_name || "Unknown Location";
           resolve(resolvedName);
         } else {
           console.warn("Google reverse geocoding failed, falling back to OSM Nominatim.", status);
@@ -137,7 +138,7 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
     if (response.ok) {
       const data = await response.json();
       const address = data.address || {};
-      return address.neighbourhood || address.suburb || address.city_district || address.town || address.village || address.road || address.county || address.city || address.country || "Unknown Location";
+      return address.road || address.neighbourhood || address.suburb || address.city_district || address.town || address.village || address.county || address.city || address.country || "Unknown Location";
     }
   } catch (err) {
     console.error("OSM Reverse Geocoding failed:", err);

@@ -92,7 +92,6 @@ export function reverseGeocodeCoordinates(lat: number, lng: number): Promise<str
         if (status === "OK" && results?.[0]) {
           const components = results[0].address_components || [];
           
-          // In Lagos, prioritize: Neighborhood -> Sublocality -> Locality -> LGA -> State
           const neighborhood = components.find((c: any) => c.types.includes("neighborhood"));
           const sublocality = components.find((c: any) => c.types.includes("sublocality") || c.types.includes("sublocality_level_1"));
           const locality = components.find((c: any) => c.types.includes("locality"));

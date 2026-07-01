@@ -55,7 +55,6 @@ export default function MapPage() {
   // Global auto-location: registers GPS position & "My Current Location" from any page
   useAutoLocation();
 
-  // Map-specific: when userLocation becomes available for the first time, auto-select the closest area
   useEffect(() => {
     if (!userLocation || areas.length === 0) return;
     
@@ -74,7 +73,6 @@ export default function MapPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation]);
 
-  // Compute areas with their live status metrics
   const areasWithStatus = useMemo(() => {
     const uniqueAreasMap = new Map<string, typeof areas[0]>();
     areas.forEach(a => {
@@ -89,7 +87,6 @@ export default function MapPage() {
       const status = getAreaStatusFromReports(area.id, reports);
       const areaReports = reports.filter(r => r.area_id === area.id);
 
-      // Custom visual detail simulation to match the third mockup exactly
       let timeAgo = "No recent data";
       let detailLabel = "";
       let confirmsCount = areaReports.reduce((sum, r) => sum + r.confidence_score, 0);
@@ -111,7 +108,6 @@ export default function MapPage() {
       if (userLocation) {
         distanceValue = getHaversineDistance(userLocation[0], userLocation[1], area.lat, area.lng);
         distanceText = `${distanceValue.toFixed(1)} km away`;
-        // Append distance to the detail label
         detailLabel = `${distanceText} • ${detailLabel}`;
       }
 
@@ -168,7 +164,7 @@ export default function MapPage() {
         const coords: [number, number] = [latitude, longitude];
 
         // Smart hybrid reverse geocoding
-        let lgaName = "Your Exact Location";
+        let lgaName = "My Current Location";
         try {
           lgaName = await reverseGeocodeCoordinates(latitude, longitude);
         } catch (geocodeErr) {
@@ -198,7 +194,7 @@ export default function MapPage() {
         const registeredAreas = areas.filter(a => !a.id.startsWith("custom-loc") && !a.id.startsWith("live-geom"));
         const closestRegistered = [...registeredAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
         
-        let targetArea = myLocationArea;
+        let targetArea = liveAreas.length > 0 ? liveAreas[0] : myLocationArea;
         if (closestRegistered && getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 4) {
           targetArea = closestRegistered;
         }
@@ -209,7 +205,7 @@ export default function MapPage() {
         // Dismiss loading toast
         toast.dismiss(toastId);
 
-        toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
+        toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${targetArea.name}.`, {
           icon: "📍",
           duration: 4000
         });

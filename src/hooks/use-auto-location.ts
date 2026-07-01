@@ -60,7 +60,7 @@ export function useAutoLocation() {
 
         dispatch(setUserLocation(coords));
 
-        let lgaName = "Your Exact Location";
+        let lgaName = "My Current Location";
         try {
           lgaName = await reverseGeocodeCoordinates(latitude, longitude);
         } catch (e) {
@@ -99,7 +99,8 @@ export function useAutoLocation() {
         if (closestRegistered && getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 4) {
           dispatch(setSelectedAreaId(closestRegistered.id));
         } else {
-          dispatch(setSelectedAreaId(myLocationArea.id));
+          const preciseLiveArea = liveAreas.length > 0 ? liveAreas[0] : myLocationArea;
+          dispatch(setSelectedAreaId(preciseLiveArea.id));
         }
       })
       .catch(async (err) => {

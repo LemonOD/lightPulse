@@ -99,16 +99,12 @@ export default function AreasPage() {
         toast.dismiss(toastId);
         console.error("Geolocation error:", error);
 
-        const fallbackCoords: [number, number] = [6.5095, 3.3711];
-        dispatch(setUserLocation(fallbackCoords));
-        dispatch(setDetectedAreaId("area-1")); // Yaba
-
         if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Location permission denied. Defaulting closest area to Yaba.", {
+          toast.error("Location permission denied. Please enable location services.", {
             icon: "🔒",
           });
         } else {
-          toast.error("GPS connection timed out. Defaulting closest area to Yaba.", {
+          toast.error("GPS connection timed out. Please try again.", {
             icon: "📡",
           });
         }
@@ -123,8 +119,9 @@ export default function AreasPage() {
   const areasWithStatus = useMemo(() => {
     const uniqueAreasMap = new Map<string, typeof areas[0]>();
     areas.forEach(a => {
-      if (!uniqueAreasMap.has(a.name)) {
-        uniqueAreasMap.set(a.name, a);
+      const normalizedName = a.name.toLowerCase().trim();
+      if (!uniqueAreasMap.has(normalizedName)) {
+        uniqueAreasMap.set(normalizedName, a);
       }
     });
     const uniqueAreas = Array.from(uniqueAreasMap.values());
@@ -167,57 +164,16 @@ export default function AreasPage() {
           distance,
           timeAgo: a.timeAgo || "Updated just now",
           customInfo: `${distance.toFixed(1)} km away`,
-          avatars: a.name === "Yaba Tech" ? [
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop",
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=50&h=50&fit=crop"
-          ] : [],
-          avatarExtra: a.name === "Yaba Tech" ? "+12" : ""
+          avatars: [],
+          avatarExtra: ""
         };
       });
 
-      return areasWithDist.sort((a, b) => a.distance - b.distance).slice(0, 3);
+      // Filter to only include areas within 10km, sort by distance, take top 3
+      return areasWithDist.filter(a => a.distance <= 10).sort((a, b) => a.distance - b.distance).slice(0, 3);
     }
 
-    const targets = ["Yaba Tech", "Adeniran Ogunsanya", "Akoka Finbarrs"];
-    const baseList = areasWithStatus.filter(a => targets.includes(a.name));
-
-    return baseList.map(a => {
-      if (a.name === "Yaba Tech") {
-        return {
-          ...a,
-          timeAgo: "Updated 2m ago",
-          status: "LIGHT_AVAILABLE" as const,
-          customInfo: "",
-          avatars: [
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50&h=50&fit=crop",
-            "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=50&h=50&fit=crop"
-          ],
-          avatarExtra: "+12",
-          distance: 0.5
-        };
-      }
-      if (a.name === "Adeniran Ogunsanya") {
-        return {
-          ...a,
-          timeAgo: "Updated 8m ago",
-          status: "LIGHT_OUT" as const,
-          customInfo: "Reports spiking",
-          confirmations: 42,
-          avatars: [],
-          avatarExtra: "",
-          distance: 2.1
-        };
-      }
-      return {
-        ...a,
-        timeAgo: "Updated 15m ago",
-        status: "LOW_VOLTAGE" as const,
-        customInfo: "Voltage unstable",
-        avatars: [],
-        avatarExtra: "",
-        distance: 1.4
-      };
-    });
+    return [];
   }, [areasWithStatus, userLocation]);
 
   const alphabetizedGroups = useMemo(() => {

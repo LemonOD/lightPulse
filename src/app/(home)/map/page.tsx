@@ -76,7 +76,16 @@ export default function MapPage() {
 
   // Compute areas with their live status metrics
   const areasWithStatus = useMemo(() => {
-    return areas.map(area => {
+    const uniqueAreasMap = new Map<string, typeof areas[0]>();
+    areas.forEach(a => {
+      const normalizedName = a.name.toLowerCase().trim();
+      if (!uniqueAreasMap.has(normalizedName)) {
+        uniqueAreasMap.set(normalizedName, a);
+      }
+    });
+    const uniqueAreas = Array.from(uniqueAreasMap.values());
+
+    return uniqueAreas.map(area => {
       const status = getAreaStatusFromReports(area.id, reports);
       const areaReports = reports.filter(r => r.area_id === area.id);
 
@@ -94,22 +103,7 @@ export default function MapPage() {
         else timeAgo = `Last updated: ${Math.round(diffMins / 60)} hours ago`;
       }
 
-      if (area.name === "Yaba") {
-        timeAgo = "Last updated: 2 mins ago";
-        detailLabel = "124 community confirmations";
-        if (status === "LIGHT_AVAILABLE") confirmsCount = 124;
-      } else if (area.name === "Sabo") {
-        timeAgo = "Last updated: 14 mins ago";
-        detailLabel = "Reported by 48 users nearby";
-      } else if (area.name === "Ojuelegba") {
-        timeAgo = "Last updated: 45 mins ago";
-        detailLabel = "Voltage fluctuations reported";
-      } else if (area.name === "Akoka") {
-        timeAgo = "Last updated: 3 hours ago";
-        detailLabel = "Need status update from this area";
-      } else {
-        detailLabel = confirmsCount > 0 ? `${confirmsCount} community verifications` : "Pending status validation";
-      }
+      detailLabel = confirmsCount > 0 ? `${confirmsCount} community verifications` : "Pending status validation";
 
       // Add distance calculation if userLocation is available!
       let distanceValue = Infinity;
@@ -134,10 +128,11 @@ export default function MapPage() {
 
   // Handle sidebar local search filtering and proximity sorting
   const filteredMapAreas = useMemo(() => {
-    const list = [...areasWithStatus];
+    let list = [...areasWithStatus];
 
-    // Proximity sort if user GPS is loaded
+    // Proximity sort and filter if user GPS is loaded
     if (userLocation) {
+      list = list.filter(a => (a.distanceValue !== undefined && a.distanceValue <= 10));
       list.sort((a, b) => (a.distanceValue || 0) - (b.distanceValue || 0));
     }
 
@@ -182,11 +177,11 @@ export default function MapPage() {
 
         const myLocationArea = {
           id: `custom-loc-gps-${getDeviceId()}`,
-          name: "My Current Location",
+          name: lgaName,
           slug: "my-current-location",
           lat: latitude,
           lng: longitude,
-          description: lgaName,
+          description: "Device Location",
           region: "Custom Location",
         };
 
@@ -199,21 +194,17 @@ export default function MapPage() {
         
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
 
-        // Compute distances and find closest area from combined list
-        const combined = [...areas, myLocationArea, ...liveAreas];
-        let closestArea = combined[0] || areas[0];
-        let minDistance = Infinity;
-
-        combined.forEach((area) => {
-          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestArea = area;
-          }
-        });
+        // Check if there's a registered area within 4km
+        const registeredAreas = areas.filter(a => !a.id.startsWith("custom-loc") && !a.id.startsWith("live-geom"));
+        const closestRegistered = [...registeredAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
+        
+        let targetArea = myLocationArea;
+        if (closestRegistered && getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 4) {
+          targetArea = closestRegistered;
+        }
 
         // Trigger dynamic selection
-        dispatch(setSelectedAreaId(closestArea.id));
+        dispatch(setSelectedAreaId(targetArea.id));
 
         // Dismiss loading toast
         toast.dismiss(toastId);
@@ -227,18 +218,12 @@ export default function MapPage() {
         toast.dismiss(toastId);
         console.error("Geolocation error:", error);
 
-        // Robust fallback coordinates (Yaba central: [6.5095, 3.3711])
-        const fallbackCoords: [number, number] = [6.5095, 3.3711];
-        dispatch(setUserLocation(fallbackCoords));
-        setCenterOnUser(true);
-        dispatch(setSelectedAreaId("area-1")); // Yaba
-
         if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Location permission denied. Defaulting map center to Yaba.", {
+          toast.error("Location permission denied. Please enable location services.", {
             icon: "🔒",
           });
         } else {
-          toast.error("GPS connection timed out. Defaulting map center to Yaba.", {
+          toast.error("GPS connection timed out. Please try again.", {
             icon: "📡",
           });
         }

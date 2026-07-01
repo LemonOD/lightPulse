@@ -83,30 +83,23 @@ export function useAutoLocation() {
 
         const myLocationArea = {
           id: `custom-loc-gps-${getDeviceId()}`,
-          name: "My Current Location",
+          name: lgaName,
           slug: "my-current-location",
           lat: latitude,
           lng: longitude,
-          description: lgaName,
+          description: "Device Location",
           region: "Custom Location",
         };
         
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
         
-        if (savedAreaId && savedAreaLat && savedAreaLng) {
-          const dist = getHaversineDistance(latitude, longitude, parseFloat(savedAreaLat), parseFloat(savedAreaLng));
-          if (dist > 4) {
-            console.log("User moved significantly. Auto-switching to new closest area.");
-            const closest = [...liveAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
-            if (closest) {
-              dispatch(setSelectedAreaId(closest.id));
-            }
-          }
+        const registeredAreas = areas.filter(a => !a.id.startsWith("custom-loc") && !a.id.startsWith("live-geom"));
+        const closestRegistered = [...registeredAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
+        
+        if (closestRegistered && getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 4) {
+          dispatch(setSelectedAreaId(closestRegistered.id));
         } else {
-          const closest = [...liveAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
-          if (closest) {
-            dispatch(setSelectedAreaId(closest.id));
-          }
+          dispatch(setSelectedAreaId(myLocationArea.id));
         }
       })
       .catch(async (err) => {

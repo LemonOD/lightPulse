@@ -90,7 +90,7 @@ const dataSlice = createSlice({
   reducers: {
     addLiveAreas: (state, action: PayloadAction<Area[]>) => {
       action.payload.forEach((newArea) => {
-        if (!state.areas.some(a => a.id === newArea.id || a.name === newArea.name)) {
+        if (!state.areas.some(a => a.id === newArea.id || a.name.toLowerCase().trim() === newArea.name.toLowerCase().trim())) {
           state.areas.push(newArea);
         }
       });

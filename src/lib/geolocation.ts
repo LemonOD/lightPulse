@@ -98,7 +98,7 @@ export function reverseGeocodeCoordinates(lat: number, lng: number): Promise<str
           const locality = components.find((c: any) => c.types.includes("locality"));
           const lga = components.find((c: any) => c.types.includes("administrative_area_level_2"));
 
-          const resolvedName = neighborhood?.long_name || sublocality?.long_name || locality?.long_name || lga?.long_name || "Lagos";
+          const resolvedName = neighborhood?.long_name || sublocality?.long_name || locality?.long_name || lga?.long_name || "Unknown Location";
           resolve(resolvedName);
         } else {
           console.warn("Google reverse geocoding failed, falling back to OSM Nominatim.", status);
@@ -128,12 +128,12 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
     if (response.ok) {
       const data = await response.json();
       const address = data.address || {};
-      return address.neighbourhood || address.suburb || address.city_district || address.town || address.village || address.road || address.county || address.city || "Lagos";
+      return address.neighbourhood || address.suburb || address.city_district || address.town || address.village || address.road || address.county || address.city || address.country || "Unknown Location";
     }
   } catch (err) {
     console.error("OSM Reverse Geocoding failed:", err);
   }
-  return "Lagos";
+  return "Unknown Location";
 }
 
 /**
@@ -150,22 +150,53 @@ export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Pro
     if (response.ok) {
       const data = await response.json();
       const address = data.address || {};
-      const name = address.neighbourhood || address.suburb || address.city_district || address.road || address.town || address.village || address.county;
+      const areas: Area[] = [];
+      const desc = [address.city || address.county, address.state, address.country].filter(Boolean).join(", ") || "Unknown Location";
       
-      if (name) {
-        const desc = [address.city || address.county, address.state].filter(Boolean).join(", ") || "Lagos, Nigeria";
-        return [{
-          id: `live-geom-${Date.now()}`,
-          name: name,
-          slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      const now = Date.now();
+
+      // 1. Precise Street Level
+      if (address.road) {
+        areas.push({
+          id: `live-geom-road-${now}`,
+          name: address.road,
+          slug: address.road.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
           lat: lat,
           lng: lon,
           description: desc,
-          region: "Near You (GPS Live)"
-        }];
+          region: "Nearby Street"
+        });
       }
+
+      // 2. Neighborhood Level
+      const nName = address.neighbourhood || address.suburb || address.city_district || address.town || address.village;
+      if (nName && nName !== address.road) {
+        areas.push({
+          id: `live-geom-hood-${now}`,
+          name: nName,
+          slug: nName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          lat: lat,
+          lng: lon,
+          description: desc,
+          region: "Nearby Neighborhood"
+        });
+      }
+      
+      // Fallback if neither exists
+      if (areas.length === 0 && address.county) {
+         areas.push({
+          id: `live-geom-county-${now}`,
+          name: address.county,
+          slug: address.county.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          lat: lat,
+          lng: lon,
+          description: desc,
+          region: "Nearby Region"
+        });
+      }
+
+      return areas;
     }
-    return [];
 
 
   } catch (osmError) {

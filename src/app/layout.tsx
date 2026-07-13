@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import { StoreProvider } from "@/store/provider";
@@ -43,12 +43,26 @@ export const metadata: Metadata = {
     description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
     images: ["https://lightpulseapp.org/og-image.jpg"],
   },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LightPulse",
+  },
   other: {
     "geo.region": "NG-LA",
     "geo.placename": "Lagos",
     "geo.position": "6.5244;3.3792",
     "ICBM": "6.5244, 3.3792",
   }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#10b981",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

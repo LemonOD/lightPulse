@@ -33,11 +33,12 @@ export default function StatusCard() {
       return computedStatus;
     }
     // Fallback to the cached backend aggregated status
-    if (activeArea.current_status && activeArea.current_status !== "UNKNOWN") {
-      return activeArea.current_status;
+    const cachedStatus = (activeArea as any).current_status;
+    if (cachedStatus && cachedStatus !== "UNKNOWN") {
+      return cachedStatus;
     }
     return "UNKNOWN";
-  }, [activeArea.current_status, activeArea.id, reports]);
+  }, [(activeArea as any).current_status, activeArea.id, reports]);
 
   // Metrics
   const lastUpdatedText = useMemo(() => {

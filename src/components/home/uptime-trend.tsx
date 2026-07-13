@@ -11,7 +11,7 @@ export default function UptimeTrend() {
   const allReports = useAppSelector((state) => state.data.reports);
 
   const activeArea = useMemo(() => {
-    return areas.find(a => a.id === selectedAreaId) || areas[0] || { id: "none", name: "Unknown", slug: "UNKNOWN" };
+    return areas.find(a => a.id === selectedAreaId) || { id: "none", name: "Unknown", slug: "UNKNOWN" };
   }, [areas, selectedAreaId]);
 
   // Compute actual dynamic trend based on real data

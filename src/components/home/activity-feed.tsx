@@ -24,7 +24,7 @@ export default function ActivityFeed() {
     setCurrentDeviceId(getDeviceId());
   }, []);
 
-  const activeArea = areas.find(a => a.id === selectedAreaId) || areas[0] || { name: "Yaba" };
+  const activeArea = areas.find(a => a.id === selectedAreaId) || { name: "Detecting location...", id: "" };
 
   // Filter out expired reports before displaying
   const activeReports = useMemo(() => {

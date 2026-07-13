@@ -53,7 +53,7 @@ export default function ReportForm() {
   const [modalStatus, setModalStatus] = useState<ReportStatus | null>(null);
   const [comment, setComment] = useState("");
 
-  const activeArea = areas.find(a => a.id === selectedAreaId) || areas[0] || { name: "Lagos Mainland", id: "" };
+  const activeArea = areas.find(a => a.id === selectedAreaId) || { name: "Detecting location...", id: "" };
 
   const getDefaultComment = (status: ReportStatus): string => {
     if (status === "LIGHT_AVAILABLE") return "Light is up!";

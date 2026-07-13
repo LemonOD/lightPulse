@@ -17,6 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lightpulseapp.org"),
   title: "LightPulse - Community Real-time Power Status Tracker",
   description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
   keywords: ["Nigeria", "Lagos", "power status", "electricity tracking","Light", "PHCN", "NEPA", "blackout tracker", "power outage", "grid update"],

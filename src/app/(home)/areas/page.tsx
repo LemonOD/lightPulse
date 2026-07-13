@@ -113,7 +113,12 @@ export default function AreasPage() {
 
   const handleSelectArea = (areaId: string) => {
     dispatch(setSelectedAreaId(areaId));
-    router.push("/");
+    const area = areas.find(a => a.id === areaId);
+    if (area && area.slug && !area.id.startsWith("custom-loc") && !area.id.startsWith("live-geom")) {
+      router.push(`/areas/${area.slug}`);
+    } else {
+      router.push("/");
+    }
   };
 
   const areasWithStatus = useMemo(() => {

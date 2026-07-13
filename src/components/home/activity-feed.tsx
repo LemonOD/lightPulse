@@ -102,9 +102,9 @@ export default function ActivityFeed() {
     <div className="flex flex-col gap-4 bg-transparent p-0">
 
       <div className="flex items-center justify-between">
-        <h4 className="text-sm text-slate-800 tracking-tight">
+        <h2 className="text-sm text-slate-800 tracking-tight font-semibold">
           Activity nearby
-        </h4>
+        </h2>
         <div className="flex items-center gap-4">
           <button
             onClick={handleRefresh}
@@ -192,9 +192,9 @@ export default function ActivityFeed() {
         {sortedReports.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2 bg-white rounded-2xl border border-slate-100 shadow-sm">
             <MessageSquare className="h-8 w-8 stroke-[1.5]" />
-            <p className="text-[10px] font-extrabold uppercase tracking-wider">
+            <h2 className="text-[10px] font-extrabold uppercase tracking-wider">
               No recent reports in {activeArea.name}
-            </p>
+            </h2>
           </div>
         )}
       </div>

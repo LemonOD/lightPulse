@@ -131,7 +131,20 @@ const dataSlice = createSlice({
       })
       .addCase(fetchInitialData.fulfilled, (state, action) => {
         state.loading = false;
-        state.areas = action.payload.areas;
+        
+        // Preserve any custom or live areas that were added by geolocation before this fetch completed
+        const dbAreas = action.payload.areas;
+        const existingCustomAreas = state.areas.filter(a => a.id.startsWith("custom-") || a.id.startsWith("live-"));
+        
+        const newAreasMap = new Map();
+        dbAreas.forEach(a => newAreasMap.set(a.id, a));
+        existingCustomAreas.forEach(a => {
+          if (!newAreasMap.has(a.id)) {
+            newAreasMap.set(a.id, a);
+          }
+        });
+        
+        state.areas = Array.from(newAreasMap.values());
         state.reports = action.payload.reports;
       })
       .addCase(fetchInitialData.rejected, (state, action) => {

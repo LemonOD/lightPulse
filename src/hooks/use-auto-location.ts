@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
+import { setHomeAreaId, setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
 import { addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import {
   getPreciseLocation,
@@ -47,6 +47,7 @@ export function useAutoLocation() {
       // Case A: User is still near their saved home area → restore it directly.
       if (areaId && !shouldAutoDetect) {
         dispatch(setSelectedAreaId(areaId));
+        dispatch(setHomeAreaId(areaId));
 
         // Still fetch live OSM areas in background for map accuracy, but don't change selection
         if (resolvedCoords) {
@@ -108,9 +109,11 @@ export function useAutoLocation() {
           getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 1
         ) {
           dispatch(setSelectedAreaId(closestRegistered.id));
+          dispatch(setHomeAreaId(closestRegistered.id));
         } else {
           const preciseLiveArea = liveAreas.length > 0 ? liveAreas[0] : myLocationArea;
           dispatch(setSelectedAreaId(preciseLiveArea.id));
+          dispatch(setHomeAreaId(preciseLiveArea.id));
         }
         return;
       }

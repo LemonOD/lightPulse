@@ -12,10 +12,10 @@ export default function Header() {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const currentRegion = useAppSelector((state) => state.app.currentRegion);
-  const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
+  const homeAreaId = useAppSelector((state) => state.app.homeAreaId);
   const areas = useAppSelector((state) => state.data.areas);
 
-  const activeArea = areas.find((a) => a.id === selectedAreaId);
+  const activeArea = areas.find((a) => a.id === homeAreaId);
   const locationLabel = activeArea ? activeArea.name: currentRegion;
 
   const navigation = [

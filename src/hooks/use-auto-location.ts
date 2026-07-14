@@ -2,81 +2,134 @@
 
 import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setUserLocation } from "@/store/slices/appSlice";
+import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
 import { addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
-import { getPreciseLocation, reverseGeocodeCoordinates, fetchLiveNearbyAreasFromOSM, getHaversineDistance } from "@/lib/geolocation";
+import {
+  getPreciseLocation,
+  reverseGeocodeCoordinates,
+  fetchLiveNearbyAreasFromOSM,
+  getHaversineDistance,
+} from "@/lib/geolocation";
+import { getDeviceId } from "@/lib/device";
+import { resolveStartupArea } from "@/lib/location-memory";
 
 export function useAutoLocation() {
   const dispatch = useAppDispatch();
   const areas = useAppSelector((state) => state.data.areas);
   const userLocation = useAppSelector((state) => state.app.userLocation);
-  
-  // Ref to ensure we only try to geolocate once on mount
+
   const hasAttemptedRef = useRef(false);
 
   useEffect(() => {
-    // Note: We removed `areas.length === 0` from the early return condition 
-    // so we CAN seed the first area if the db is empty.
-    if (typeof window === "undefined" || !navigator.geolocation || hasAttemptedRef.current || userLocation) return;
-    
-    // Only attempt if we have loaded areas from DB (even if empty) to avoid race conditions.
-    // If state.data.loading is true, maybe wait, but let's assume it has fired or is firing.
-    
+    if (typeof window === "undefined" || hasAttemptedRef.current) return;
     hasAttemptedRef.current = true;
 
-    getPreciseLocation({
-      enableHighAccuracy: true,
-      timeout: 8000,
-      maximumAge: 120000,
-      fallbackToLowAccuracy: true
-    })
-      .then(async ([latitude, longitude]) => {
-        const coords: [number, number] = [latitude, longitude];
+    async function initLocation() {
+      // Step 1: Try to get the current GPS position.
+      let gpsCoords: [number, number] | null = null;
+      try {
+        const [lat, lng] = await getPreciseLocation({
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 120000,
+          fallbackToLowAccuracy: true,
+        });
+        gpsCoords = [lat, lng];
+        dispatch(setUserLocation(gpsCoords));
+      } catch (err) {
+        console.log("GPS unavailable on startup:", err);
+      }
 
-        // Store location coordinates globally in Redux
-        dispatch(setUserLocation(coords));
+      // Step 2: Decide which area to show using GPS-anchored sticky logic.
+      const { areaId, shouldAutoDetect, gpsCoords: resolvedCoords } =
+        await resolveStartupArea(gpsCoords, getHaversineDistance);
 
-        let lgaName = "Your Exact Location";
+      // Case A: User is still near their saved home area → restore it directly.
+      if (areaId && !shouldAutoDetect) {
+        dispatch(setSelectedAreaId(areaId));
+
+        // Still fetch live OSM areas in background for map accuracy, but don't change selection
+        if (resolvedCoords) {
+          const [lat, lng] = resolvedCoords;
+          const liveAreas = await fetchLiveNearbyAreasFromOSM(lat, lng);
+          if (liveAreas.length > 0) {
+            dispatch(addLiveAreas(liveAreas));
+          }
+        }
+        return;
+      }
+
+      // Case B: User has moved or is new → full GPS-based auto-detection.
+      if (shouldAutoDetect && resolvedCoords) {
+        const [latitude, longitude] = resolvedCoords;
+
+        let lgaName = "My Current Location";
         try {
           lgaName = await reverseGeocodeCoordinates(latitude, longitude);
         } catch (e) {
           console.warn("Reverse geocode failed", e);
         }
 
-        // Fetch live actual nearby areas/streets from OpenStreetMap
         const liveAreas = await fetchLiveNearbyAreasFromOSM(latitude, longitude);
 
-        // If the database is completely empty, automatically save the nearest identified OSM area to the database
-        // so the user doesn't face an empty "Unknown Location" anxiety.
         if (areas.length === 0 && liveAreas.length > 0) {
-          // Find the closest one
-          const closestArea = [...liveAreas].sort((a, b) => {
-             const distA = getHaversineDistance(latitude, longitude, a.lat, a.lng);
-             const distB = getHaversineDistance(latitude, longitude, b.lat, b.lng);
-             return distA - distB;
-          })[0];
-          
-          if (closestArea) {
-             // Save it to Supabase via Thunk
-             dispatch(saveCustomAreaThunk(closestArea));
-          }
+          const closestLive = [...liveAreas].sort(
+            (a, b) =>
+              getHaversineDistance(latitude, longitude, a.lat, a.lng) -
+              getHaversineDistance(latitude, longitude, b.lat, b.lng)
+          )[0];
+          if (closestLive) dispatch(saveCustomAreaThunk(closestLive));
         }
 
         const myLocationArea = {
-          id: `custom-loc-gps`,
-          name: "My Current Location",
+          id: `custom-loc-gps-${getDeviceId()}`,
+          name: lgaName,
           slug: "my-current-location",
           lat: latitude,
           lng: longitude,
-          description: lgaName,
+          description: "Device Location",
           region: "Custom Location",
         };
-        
-        // Dispatch custom location and OSM locations to UI state
+
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
-      })
-      .catch((err) => {
-        console.log("Auto-mount geolocator skipped or unauthorized:", err);
-      });
-  }, [areas.length, dispatch, userLocation]);
+
+        // Pick the closest registered area within 1km, otherwise fall back to live OSM area
+        const registeredAreas = areas.filter(
+          (a) => !a.id.startsWith("custom-loc") && !a.id.startsWith("live-geom")
+        );
+        const closestRegistered = [...registeredAreas].sort(
+          (a, b) =>
+            getHaversineDistance(latitude, longitude, a.lat, a.lng) -
+            getHaversineDistance(latitude, longitude, b.lat, b.lng)
+        )[0];
+
+        if (
+          closestRegistered &&
+          getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 1
+        ) {
+          dispatch(setSelectedAreaId(closestRegistered.id));
+        } else {
+          const preciseLiveArea = liveAreas.length > 0 ? liveAreas[0] : myLocationArea;
+          dispatch(setSelectedAreaId(preciseLiveArea.id));
+        }
+        return;
+      }
+
+      // Case C: GPS denied and no saved area → use Lagos network fallback
+      if (!gpsCoords && !areaId) {
+        console.log("No GPS and no saved area — using network fallback.");
+        const fallbackCoords: [number, number] = [6.5095, 3.3711];
+        dispatch(setUserLocation(fallbackCoords));
+        const liveAreas = await fetchLiveNearbyAreasFromOSM(fallbackCoords[0], fallbackCoords[1]);
+        if (liveAreas.length > 0) {
+          dispatch(addLiveAreas(liveAreas));
+        }
+      }
+    }
+
+    initLocation();
+  // Run only once on mount — areas.length changes as DB data loads,
+  // but we intentionally don't re-run location logic on those changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]);
 }

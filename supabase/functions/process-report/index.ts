@@ -70,13 +70,19 @@ serve(async (req) => {
     let clusteredReportId = null;
 
     if (latitude && longitude) {
-      // Find active reports in the same area
+      // Find active reports globally within a ~1km bounding box (roughly 0.01 degrees)
+      const latTolerance = 0.01;
+      const lngTolerance = 0.01;
+
       const now = new Date().toISOString();
       const { data: activeAreaReports } = await supabaseClient
         .from('reports')
-        .select('id, latitude, longitude, status')
-        .eq('area_id', area_id)
+        .select('id, area_id, latitude, longitude, status')
         .eq('status', status)
+        .gte('latitude', latitude - latTolerance)
+        .lte('latitude', latitude + latTolerance)
+        .gte('longitude', longitude - lngTolerance)
+        .lte('longitude', longitude + lngTolerance)
         .gt('expires_at', now);
 
       if (activeAreaReports) {

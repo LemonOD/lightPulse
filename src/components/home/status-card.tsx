@@ -12,7 +12,8 @@ export default function StatusCard() {
   const loading = useAppSelector((state) => state.data.loading);
 
   const activeArea = useMemo(() => {
-    return areas.find(a => a.id === selectedAreaId) || areas[0] || { id: "none", name: "Select an area" };
+    if (!selectedAreaId) return { id: "none", name: "Detecting location...", last_reported_at: null };
+    return areas.find(a => a.id === selectedAreaId) || { id: "none", name: "Detecting location...", last_reported_at: null };
   }, [areas, selectedAreaId]);
 
   // All reports for this area in last 24h (from Redux)
@@ -26,12 +27,18 @@ export default function StatusCard() {
   }, [areaReports24h]);
 
   const currentStatus = useMemo(() => {
-    // Rely on backend aggregated status if available, else compute optimistic
-    if (activeArea.current_status && activeArea.current_status !== "UNKNOWN") {
-      return activeArea.current_status;
+    // Prioritize computed status from local reports (which includes newly submitted reports immediately)
+    const computedStatus = getAreaStatusFromReports(activeArea.id, reports);
+    if (computedStatus !== "UNKNOWN") {
+      return computedStatus;
     }
-    return getAreaStatusFromReports(activeArea.id, reports);
-  }, [activeArea.current_status, activeArea.id, reports]);
+    // Fallback to the cached backend aggregated status
+    const cachedStatus = (activeArea as any).current_status;
+    if (cachedStatus && cachedStatus !== "UNKNOWN") {
+      return cachedStatus;
+    }
+    return "UNKNOWN";
+  }, [(activeArea as any).current_status, activeArea.id, reports]);
 
   // Metrics
   const lastUpdatedText = useMemo(() => {

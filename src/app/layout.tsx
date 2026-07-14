@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "leaflet/dist/leaflet.css";
 import { StoreProvider } from "@/store/provider";
@@ -6,6 +6,7 @@ import RealtimeProvider from "@/components/providers/realtime-provider";
 import Header from "@/components/layout/header";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Toaster } from "react-hot-toast";
+import PWAInstallBanner from "@/components/shared/pwa-install-banner";
 import "./globals.css";
 
 
@@ -17,8 +18,52 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://lightpulseapp.org"),
   title: "LightPulse - Community Real-time Power Status Tracker",
-  description: "Check Lagos neighborhood electricity status, report outages, and validate community reports in real time.",
+  description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
+  keywords: ["Nigeria", "Lagos", "power status", "electricity tracking","Light", "PHCN", "NEPA", "blackout tracker", "power outage", "grid update"],
+  openGraph: {
+    title: "LightPulse - Community Real-time Power Status Tracker",
+    description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
+    url: "https://lightpulseapp.org",
+    siteName: "LightPulse",
+    images: [
+      {
+        url: "https://lightpulseapp.org/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "LightPulse Power Status Tracker",
+      }
+    ],
+    locale: "en_NG",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LightPulse - Community Real-time Power Status Tracker",
+    description: "Check neighborhood electricity status, report outages, and validate community reports in real time.",
+    images: ["https://lightpulseapp.org/og-image.jpg"],
+  },
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "LightPulse",
+  },
+  other: {
+    "geo.region": "NG-LA",
+    "geo.placename": "Lagos",
+    "geo.position": "6.5244;3.3792",
+    "ICBM": "6.5244, 3.3792",
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#10b981",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
@@ -57,6 +102,7 @@ export default function RootLayout({
               {children}
             </div>
             <BottomNav />
+            <PWAInstallBanner />
           </RealtimeProvider>
         </StoreProvider>
       </body>

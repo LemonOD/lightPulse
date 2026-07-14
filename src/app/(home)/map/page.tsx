@@ -9,8 +9,10 @@ import { X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useMemo, useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates } from "@/lib/geolocation";
+import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates, formatDistance } from "@/lib/geolocation";
+import { getDeviceId } from "@/lib/device";
 import { useAutoLocation } from "@/hooks/use-auto-location";
+import { saveHomeArea } from "@/lib/location-memory";
 
 // Helper utility (already defined in @/lib/geolocation but imported/bound here)
 
@@ -54,7 +56,6 @@ export default function MapPage() {
   // Global auto-location: registers GPS position & "My Current Location" from any page
   useAutoLocation();
 
-  // Map-specific: when userLocation becomes available for the first time, auto-select the closest area
   useEffect(() => {
     if (!userLocation || areas.length === 0) return;
     
@@ -73,13 +74,20 @@ export default function MapPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation]);
 
-  // Compute areas with their live status metrics
   const areasWithStatus = useMemo(() => {
-    return areas.map(area => {
+    const uniqueAreasMap = new Map<string, typeof areas[0]>();
+    areas.forEach(a => {
+      const normalizedName = a.name.toLowerCase().trim();
+      if (!uniqueAreasMap.has(normalizedName)) {
+        uniqueAreasMap.set(normalizedName, a);
+      }
+    });
+    const uniqueAreas = Array.from(uniqueAreasMap.values());
+
+    return uniqueAreas.map(area => {
       const status = getAreaStatusFromReports(area.id, reports);
       const areaReports = reports.filter(r => r.area_id === area.id);
 
-      // Custom visual detail simulation to match the third mockup exactly
       let timeAgo = "No recent data";
       let detailLabel = "";
       let confirmsCount = areaReports.reduce((sum, r) => sum + r.confidence_score, 0);
@@ -93,30 +101,14 @@ export default function MapPage() {
         else timeAgo = `Last updated: ${Math.round(diffMins / 60)} hours ago`;
       }
 
-      if (area.name === "Yaba") {
-        timeAgo = "Last updated: 2 mins ago";
-        detailLabel = "124 community confirmations";
-        if (status === "LIGHT_AVAILABLE") confirmsCount = 124;
-      } else if (area.name === "Sabo") {
-        timeAgo = "Last updated: 14 mins ago";
-        detailLabel = "Reported by 48 users nearby";
-      } else if (area.name === "Ojuelegba") {
-        timeAgo = "Last updated: 45 mins ago";
-        detailLabel = "Voltage fluctuations reported";
-      } else if (area.name === "Akoka") {
-        timeAgo = "Last updated: 3 hours ago";
-        detailLabel = "Need status update from this area";
-      } else {
-        detailLabel = confirmsCount > 0 ? `${confirmsCount} community verifications` : "Pending status validation";
-      }
+      detailLabel = confirmsCount > 0 ? `${confirmsCount} community verifications` : "Pending status validation";
 
       // Add distance calculation if userLocation is available!
       let distanceValue = Infinity;
       let distanceText = "";
       if (userLocation) {
         distanceValue = getHaversineDistance(userLocation[0], userLocation[1], area.lat, area.lng);
-        distanceText = `${distanceValue.toFixed(1)} km away`;
-        // Append distance to the detail label
+        distanceText = formatDistance(distanceValue);
         detailLabel = `${distanceText} • ${detailLabel}`;
       }
 
@@ -133,10 +125,11 @@ export default function MapPage() {
 
   // Handle sidebar local search filtering and proximity sorting
   const filteredMapAreas = useMemo(() => {
-    const list = [...areasWithStatus];
+    let list = [...areasWithStatus];
 
-    // Proximity sort if user GPS is loaded
+    // Proximity sort and filter if user GPS is loaded
     if (userLocation) {
+      list = list.filter(a => (a.distanceValue !== undefined && a.distanceValue <= 10));
       list.sort((a, b) => (a.distanceValue || 0) - (b.distanceValue || 0));
     }
 
@@ -172,7 +165,7 @@ export default function MapPage() {
         const coords: [number, number] = [latitude, longitude];
 
         // Smart hybrid reverse geocoding
-        let lgaName = "Your Exact Location";
+        let lgaName = "My Current Location";
         try {
           lgaName = await reverseGeocodeCoordinates(latitude, longitude);
         } catch (geocodeErr) {
@@ -180,12 +173,12 @@ export default function MapPage() {
         }
 
         const myLocationArea = {
-          id: `custom-loc-gps`,
-          name: "My Current Location",
+          id: `custom-loc-gps-${getDeviceId()}`,
+          name: lgaName,
           slug: "my-current-location",
           lat: latitude,
           lng: longitude,
-          description: lgaName,
+          description: "Device Location",
           region: "Custom Location",
         };
 
@@ -198,26 +191,22 @@ export default function MapPage() {
         
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
 
-        // Compute distances and find closest area from combined list
-        const combined = [...areas, myLocationArea, ...liveAreas];
-        let closestArea = combined[0] || areas[0];
-        let minDistance = Infinity;
-
-        combined.forEach((area) => {
-          const dist = getHaversineDistance(latitude, longitude, area.lat, area.lng);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestArea = area;
-          }
-        });
+        // Check if there's a registered area within 1km
+        const registeredAreas = areas.filter(a => !a.id.startsWith("custom-loc") && !a.id.startsWith("live-geom"));
+        const closestRegistered = [...registeredAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
+        
+        let targetArea = liveAreas.length > 0 ? liveAreas[0] : myLocationArea;
+        if (closestRegistered && getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 1) {
+          targetArea = closestRegistered;
+        }
 
         // Trigger dynamic selection
-        dispatch(setSelectedAreaId(closestArea.id));
+        dispatch(setSelectedAreaId(targetArea.id));
 
         // Dismiss loading toast
         toast.dismiss(toastId);
 
-        toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${closestArea.name}.`, {
+        toast.success(`GPS Calibrated! Located near ${lgaName}. Centered on closest area: ${targetArea.name}.`, {
           icon: "📍",
           duration: 4000
         });
@@ -226,18 +215,12 @@ export default function MapPage() {
         toast.dismiss(toastId);
         console.error("Geolocation error:", error);
 
-        // Robust fallback coordinates (Yaba central: [6.5095, 3.3711])
-        const fallbackCoords: [number, number] = [6.5095, 3.3711];
-        dispatch(setUserLocation(fallbackCoords));
-        setCenterOnUser(true);
-        dispatch(setSelectedAreaId("area-1")); // Yaba
-
         if (error.code === error.PERMISSION_DENIED) {
-          toast.error("Location permission denied. Defaulting map center to Yaba.", {
+          toast.error("Location permission denied. Please enable location services.", {
             icon: "🔒",
           });
         } else {
-          toast.error("GPS connection timed out. Defaulting map center to Yaba.", {
+          toast.error("GPS connection timed out. Please try again.", {
             icon: "📡",
           });
         }
@@ -259,7 +242,7 @@ export default function MapPage() {
     try {
       const finalAreaName = customName ? customName.trim() || activeArea.name : activeArea.name;
 
-      if (activeArea.id === "custom-loc-gps" && finalAreaName !== activeArea.name) {
+      if (activeArea.id.startsWith("custom-loc-gps") && finalAreaName !== activeArea.name) {
         await dispatch(saveCustomAreaThunk({
           ...activeArea,
           name: finalAreaName,
@@ -267,7 +250,7 @@ export default function MapPage() {
         }));
       }
 
-      await dispatch(
+      const report = await dispatch(
         submitReport({
           area_id: activeArea.id,
           area_name: finalAreaName,
@@ -277,9 +260,20 @@ export default function MapPage() {
         })
       ).unwrap();
 
-      toast.success(`Power status registered! Thank you for updating ${activeArea.name}.`, {
-        icon: "⚡",
-      });
+      if (report.area_id !== activeArea.id) {
+        dispatch(setSelectedAreaId(report.area_id));
+        toast.success(`Report merged with a nearby community!`, {
+          icon: "🔗",
+        });
+        // Anchor merged area as home
+        saveHomeArea(report.area_id, userLocation?.[0] ?? activeArea.lat, userLocation?.[1] ?? activeArea.lng);
+      } else {
+        toast.success(`Power status registered! Thank you for updating ${activeArea.name}.`, {
+          icon: "⚡",
+        });
+        // Anchor this area as home
+        saveHomeArea(activeArea.id, activeArea.lat, activeArea.lng);
+      }
 
       setShowReportModal(false);
       setComment("");

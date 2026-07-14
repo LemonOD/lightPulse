@@ -45,7 +45,7 @@ export const submitReport = createAsyncThunk(
       const state: any = getState();
       const activeArea = state.data.areas.find((a: Area) => a.id === reportData.area_id);
       
-      if (activeArea && (activeArea.id.startsWith("osm-") || activeArea.id.startsWith("search-") || activeArea.id.startsWith("custom-"))) {
+      if (activeArea && (activeArea.id.startsWith("osm-") || activeArea.id.startsWith("search-") || activeArea.id.startsWith("custom-") || activeArea.id.startsWith("live-"))) {
         await dbService.saveCustomArea(activeArea);
       }
 
@@ -76,7 +76,6 @@ export const saveCustomAreaThunk = createAsyncThunk(
   async (area: Area, { rejectWithValue, dispatch }) => {
     try {
       await dbService.saveCustomArea(area);
-      // We don't need to add it again if it's already in liveAreas, but we update its name
       return area;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to save custom area";
@@ -91,7 +90,7 @@ const dataSlice = createSlice({
   reducers: {
     addLiveAreas: (state, action: PayloadAction<Area[]>) => {
       action.payload.forEach((newArea) => {
-        if (!state.areas.some(a => a.id === newArea.id)) {
+        if (!state.areas.some(a => a.id === newArea.id || a.name.toLowerCase().trim() === newArea.name.toLowerCase().trim())) {
           state.areas.push(newArea);
         }
       });
@@ -107,12 +106,16 @@ const dataSlice = createSlice({
     upsertReport: (state, action: PayloadAction<Report>) => {
       const idx = state.reports.findIndex(r => r.id === action.payload.id);
       if (idx !== -1) {
+        const oldCreatedAt = new Date(state.reports[idx].created_at).getTime();
+        const newCreatedAt = new Date(action.payload.created_at).getTime();
+        if (oldCreatedAt > newCreatedAt) {
+          action.payload.created_at = state.reports[idx].created_at;
+        }
         state.reports[idx] = action.payload;
       } else {
         state.reports.unshift(action.payload);
       }
     },
-    // Realtime action: update confidence score
     updateReportConfidence: (state, action: PayloadAction<{ id: string; newScore: number }>) => {
       const report = state.reports.find(r => r.id === action.payload.id);
       if (report) {
@@ -122,14 +125,26 @@ const dataSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch initial data
       .addCase(fetchInitialData.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchInitialData.fulfilled, (state, action) => {
         state.loading = false;
-        state.areas = action.payload.areas;
+        
+        // Preserve any custom or live areas that were added by geolocation before this fetch completed
+        const dbAreas = action.payload.areas;
+        const existingCustomAreas = state.areas.filter(a => a.id.startsWith("custom-") || a.id.startsWith("live-"));
+        
+        const newAreasMap = new Map();
+        dbAreas.forEach(a => newAreasMap.set(a.id, a));
+        existingCustomAreas.forEach(a => {
+          if (!newAreasMap.has(a.id)) {
+            newAreasMap.set(a.id, a);
+          }
+        });
+        
+        state.areas = Array.from(newAreasMap.values());
         state.reports = action.payload.reports;
       })
       .addCase(fetchInitialData.rejected, (state, action) => {
@@ -137,24 +152,24 @@ const dataSlice = createSlice({
         state.error = action.payload as string;
       })
       
-      // Submit report
       .addCase(submitReport.fulfilled, (state, action: PayloadAction<Report>) => {
-        // Prevent duplicate if the realtime hook already injected it
-        const exists = state.reports.some(r => r.id === action.payload.id);
-        if (!exists) {
+        const idx = state.reports.findIndex(r => r.id === action.payload.id);
+        if (idx !== -1) {
+          state.reports[idx].confidence_score = Math.max(state.reports[idx].confidence_score, action.payload.confidence_score);
+          state.reports[idx].created_at = new Date().toISOString(); // Bump to now to update UI
+        } else {
           state.reports.unshift(action.payload);
         }
       })
       
-      // Confirm report
       .addCase(confirmReportThunk.fulfilled, (state, action) => {
         const confirmedReport = state.reports.find(r => r.id === action.payload.reportId);
         if (confirmedReport) {
           const wasConfirmed = confirmedReport.has_confirmed;
           confirmedReport.confidence_score = action.payload.count;
           confirmedReport.has_confirmed = true;
+          confirmedReport.created_at = new Date().toISOString(); // Bump to now to update UI
 
-          // If this is a fresh confirmation click, synchronize all matching local reports
           if (!wasConfirmed) {
             state.reports.forEach((r) => {
               if (
@@ -170,7 +185,6 @@ const dataSlice = createSlice({
         }
       })
       
-      // Save custom area
       .addCase(saveCustomAreaThunk.fulfilled, (state, action) => {
         const existingArea = state.areas.find(a => a.id === action.payload.id);
         if (existingArea) {

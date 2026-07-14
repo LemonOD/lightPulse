@@ -12,6 +12,7 @@ import { toast } from "react-hot-toast";
 import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, reverseGeocodeCoordinates, formatDistance } from "@/lib/geolocation";
 import { getDeviceId } from "@/lib/device";
 import { useAutoLocation } from "@/hooks/use-auto-location";
+import { saveHomeArea } from "@/lib/location-memory";
 
 // Helper utility (already defined in @/lib/geolocation but imported/bound here)
 
@@ -190,12 +191,12 @@ export default function MapPage() {
         
         dispatch(addLiveAreas([myLocationArea, ...liveAreas]));
 
-        // Check if there's a registered area within 4km
+        // Check if there's a registered area within 1km
         const registeredAreas = areas.filter(a => !a.id.startsWith("custom-loc") && !a.id.startsWith("live-geom"));
         const closestRegistered = [...registeredAreas].sort((a, b) => getHaversineDistance(latitude, longitude, a.lat, a.lng) - getHaversineDistance(latitude, longitude, b.lat, b.lng))[0];
         
         let targetArea = liveAreas.length > 0 ? liveAreas[0] : myLocationArea;
-        if (closestRegistered && getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 4) {
+        if (closestRegistered && getHaversineDistance(latitude, longitude, closestRegistered.lat, closestRegistered.lng) <= 1) {
           targetArea = closestRegistered;
         }
 
@@ -264,10 +265,14 @@ export default function MapPage() {
         toast.success(`Report merged with a nearby community!`, {
           icon: "🔗",
         });
+        // Anchor merged area as home
+        saveHomeArea(report.area_id, userLocation?.[0] ?? activeArea.lat, userLocation?.[1] ?? activeArea.lng);
       } else {
         toast.success(`Power status registered! Thank you for updating ${activeArea.name}.`, {
           icon: "⚡",
         });
+        // Anchor this area as home
+        saveHomeArea(activeArea.id, activeArea.lat, activeArea.lng);
       }
 
       setShowReportModal(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/store";
-import { confirmReportThunk } from "@/store/slices/dataSlice";
+import { confirmReportThunk, fetchInitialData } from "@/store/slices/dataSlice";
 import { Check, MessageSquare, RotateCw, Zap, ZapOff, AlertTriangle, HelpCircle, ThumbsUp } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { getDeviceId } from "@/lib/device";
@@ -43,9 +43,10 @@ export default function ActivityFeed() {
     });
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 800);
+    await dispatch(fetchInitialData());
+    setTimeout(() => setIsRefreshing(false), 300);
   };
 
   const getRelativeTime = (isoString: string) => {
@@ -115,8 +116,24 @@ export default function ActivityFeed() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {sortedReports.slice(0, visibleCount).map((report) => {
+      <div className="flex flex-col gap-3 max-h-[350px] overflow-y-auto pr-1 pb-2 custom-scrollbar">
+        {isRefreshing && (
+          <>
+            {[1, 2, 3].map((i) => (
+              <div key={`skel-${i}`} className="flex items-center justify-between gap-4 p-4 rounded-md border border-slate-200 bg-white/50 animate-pulse">
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <div className="shrink-0 h-11 w-11 rounded-full bg-slate-200"></div>
+                  <div className="flex-1 flex flex-col gap-2 min-w-0">
+                    <div className="h-3 w-3/4 bg-slate-200 rounded"></div>
+                    <div className="h-2 w-1/3 bg-slate-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        
+        {!isRefreshing && sortedReports.slice(0, visibleCount).map((report) => {
           const iconSettings = getStatusIconSettings(report.status);
           const StatusIcon = iconSettings.icon;
           const isAuthor = report.device_id === currentDeviceId;
@@ -189,7 +206,7 @@ export default function ActivityFeed() {
           );
         })}
 
-        {sortedReports.length === 0 && (
+        {!isRefreshing && sortedReports.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2 bg-white rounded-2xl border border-slate-100 shadow-sm">
             <MessageSquare className="h-8 w-8 stroke-[1.5]" />
             <h2 className="text-[10px] font-extrabold uppercase tracking-wider">
@@ -199,7 +216,7 @@ export default function ActivityFeed() {
         )}
       </div>
 
-      {sortedReports.length > visibleCount && (
+      {!isRefreshing && sortedReports.length > visibleCount && (
         <button
           onClick={() => setVisibleCount((prev) => prev + 3)}
           className="w-full h-11 border border-dashed border-slate-200 hover:border-slate-300 rounded-2xl flex items-center justify-center font-bold text-xs text-slate-500 hover:text-slate-700 bg-white/30 hover:bg-white/50 transition-all duration-200 cursor-pointer"

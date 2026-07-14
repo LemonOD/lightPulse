@@ -4,6 +4,7 @@ interface AppState {
   currentRegion: string;
   detectedAreaId: string | null;
   selectedAreaId: string | null;
+  homeAreaId: string | null;
   searchQuery: string;
   isLocating: boolean;
   userLocation: [number, number] | null;
@@ -13,6 +14,7 @@ const initialState: AppState = {
   currentRegion: "",
   detectedAreaId: null,
   selectedAreaId: null, 
+  homeAreaId: null,
   searchQuery: "",
   isLocating: false,
   userLocation: null,
@@ -34,6 +36,9 @@ const appSlice = createSlice({
     setSelectedAreaId: (state, action: PayloadAction<string | null>) => {
       state.selectedAreaId = action.payload;
     },
+    setHomeAreaId: (state, action: PayloadAction<string | null>) => {
+      state.homeAreaId = action.payload;
+    },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
     },
@@ -50,6 +55,7 @@ export const {
   setRegion,
   setDetectedAreaId,
   setSelectedAreaId,
+  setHomeAreaId,
   setSearchQuery,
   setIsLocating,
   setUserLocation

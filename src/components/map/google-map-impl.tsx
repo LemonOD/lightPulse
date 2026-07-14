@@ -18,6 +18,7 @@ interface GoogleMapProps {
   userLocation?: [number, number] | null;
   centerOnUser?: boolean;
   apiKey: string;
+  onSelectArea?: (areaId: string) => void;
 }
 
 export default function GoogleMapImpl({
@@ -25,7 +26,8 @@ export default function GoogleMapImpl({
   selectedAreaId,
   userLocation = null,
   centerOnUser = false,
-  apiKey
+  apiKey,
+  onSelectArea
 }: GoogleMapProps) {
   const dispatch = useAppDispatch();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -75,20 +77,20 @@ export default function GoogleMapImpl({
     const iconColor = colorMap[status] || colorMap.UNKNOWN;
     
     const svgMarkup = status === "LIGHT_AVAILABLE" 
-      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width: 18px; height: 18px;"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" style="width: 14px; height: 14px;"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`
       : status === "LIGHT_OUT"
-      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>`
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>`
       : status === "LOW_VOLTAGE"
-      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+      ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 12px; height: 12px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+      : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
 
     const cleanName = name === "Yaba Central" ? "YABA TECH" : name.toUpperCase();
 
     return `<div class="flex flex-col items-center justify-center relative font-sans">
-              <div class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white shadow-lg transition-all duration-300 transform hover:scale-115 active:scale-95" style="background-color: ${iconColor};">
+              <div class="flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-lg transition-all duration-300 transform hover:scale-115 active:scale-95" style="background-color: ${iconColor};">
                 ${svgMarkup}
               </div>
-              <div class="mt-1.5 px-2.5 py-0.5 rounded-full bg-white border border-slate-100 shadow-sm text-[8px] font-black text-slate-800 uppercase tracking-widest text-center whitespace-nowrap leading-none select-none">
+              <div class="mt-1 px-2 py-0.5 rounded-full bg-white/95 border border-slate-100 shadow-sm text-[8px] font-black text-slate-800 uppercase tracking-widest text-center whitespace-nowrap leading-none select-none">
                 ${cleanName}
               </div>
             </div>`;
@@ -197,7 +199,7 @@ export default function GoogleMapImpl({
         const position = overlayProjection.fromLatLngToDivPixel(this.latlng);
         if (position) {
           this.div.style.left = (position.x - 40) + "px";
-          this.div.style.top = (position.y - 30) + "px";
+          this.div.style.top = (position.y - 14) + "px";
         }
       }
 
@@ -268,7 +270,11 @@ export default function GoogleMapImpl({
         latlng,
         markerHtml,
         () => {
-          dispatch(setSelectedAreaId(area.id));
+          if (onSelectArea) {
+            onSelectArea(area.id);
+          } else {
+            dispatch(setSelectedAreaId(area.id));
+          }
         },
         map
       );
@@ -286,7 +292,7 @@ export default function GoogleMapImpl({
       const userOverlay = new UserLocationOverlay(userLatLng, pulsingHtml, map);
       userOverlayRef.current = userOverlay;
     }
-  }, [areas, userLocation, loaded, dispatch]);
+  }, [areas, userLocation, selectedAreaId, loaded, dispatch]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;

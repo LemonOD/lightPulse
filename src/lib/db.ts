@@ -34,38 +34,14 @@ export async function calculateAreaStatus(areaId: string): Promise<void> {
     return;
   }
 
-  const counts: Record<string, number> = {
-    "LIGHT_AVAILABLE": 0,
-    "LIGHT_OUT": 0,
-    "LOW_VOLTAGE": 0,
-    "UNKNOWN": 0
-  };
-
-  let latestReportTime = new Date(0);
-
-  activeReports.forEach(r => {
-    if (counts[r.status] !== undefined) {
-      counts[r.status]++;
-    }
-    const reportTime = new Date(r.created_at);
-    if (reportTime > latestReportTime) {
-      latestReportTime = reportTime;
-    }
-  });
-
-  let maxCount = -1;
-  let majorityStatus = "UNKNOWN";
-
-  for (const [status, count] of Object.entries(counts)) {
-    if (count > maxCount) {
-      maxCount = count;
-      majorityStatus = status;
-    }
-  }
+  // Power states flip instantly. We must prioritize the most recent chronologically valid report.
+  // Sort descending by date to get the latest report
+  activeReports.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const latestReport = activeReports[0];
 
   await supabase.from("areas").update({
-    current_status: majorityStatus,
-    last_reported_at: latestReportTime.toISOString()
+    current_status: latestReport.status,
+    last_reported_at: latestReport.created_at
   }).eq("id", areaId);
 }
 
@@ -277,20 +253,9 @@ export function getAreaStatusFromReports(areaId: string, reports: Report[]): Rep
   const activeReports = reports.filter(r => r.area_id === areaId && !isReportExpired(r));
   if (activeReports.length === 0) return "UNKNOWN";
 
-  const counts: Record<string, number> = {};
-  activeReports.forEach(r => {
-    counts[r.status] = (counts[r.status] || 0) + 1;
-  });
-
-  let maxCount = -1;
-  let majorityStatus = "UNKNOWN";
-
-  for (const [status, count] of Object.entries(counts)) {
-    if (count > maxCount) {
-      maxCount = count;
-      majorityStatus = status;
-    }
-  }
+  // Power states flip instantly. We must prioritize the most recent chronologically valid report.
+  // Sort descending by date
+  activeReports.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   
-  return majorityStatus as ReportStatus;
+  return activeReports[0].status;
 }

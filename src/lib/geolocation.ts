@@ -70,9 +70,9 @@ export const getHaversineDistance = (lat1: number, lon1: number, lat2: number, l
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -101,7 +101,7 @@ export function reverseGeocodeCoordinates(lat: number, lng: number): Promise<str
       geocoder.geocode({ location: { lat, lng } }, (results: any, status: any) => {
         if (status === "OK" && results?.[0]) {
           const components = results[0].address_components || [];
-          
+
           const route = components.find((c: any) => c.types.includes("route"));
           const neighborhood = components.find((c: any) => c.types.includes("neighborhood"));
           const sublocality = components.find((c: any) => c.types.includes("sublocality") || c.types.includes("sublocality_level_1"));
@@ -138,7 +138,27 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
     if (response.ok) {
       const data = await response.json();
       const address = data.address || {};
-      return address.road || address.neighbourhood || address.suburb || address.city_district || address.town || address.village || address.county || address.city || address.country || "Unknown Location";
+      // Strict priority list, aggressively filtering out false-positives like 'ajebo'
+      const candidates = [
+        address.neighbourhood,
+        address.quarter,
+        address.hamlet,
+        address.suburb,
+        address.city_district,
+        address.borough,
+        address.district,
+        address.village,
+        address.town,
+        address.city,
+        address.municipality,
+        address.county,
+        address.state_district,
+        address.road,
+        address.country
+      ];
+
+      const validName = candidates.find(c => c && typeof c === 'string' && c.toLowerCase() !== "ajebo");
+      return validName || "Unknown Location";
     }
   } catch (err) {
     console.error("OSM Reverse Geocoding failed:", err);
@@ -150,65 +170,119 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
  * Fetches live actual nearby areas/estates/streets from OpenStreetMap Nominatim Bounding Box API
  */
 export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Promise<Area[]> {
-  try {
-    // To comply with Nominatim's strict usage policy (1 request/sec), we only query the central point.
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
-      { headers: { "User-Agent": "LightPulse/1.0" } }
-    );
-    
-    if (response.ok) {
-      const data = await response.json();
-      const address = data.address || {};
-      const areas: Area[] = [];
-      const desc = [address.city || address.county, address.state, address.country].filter(Boolean).join(", ") || "Unknown Location";
-      
-      const now = Date.now();
+  const now = Date.now();
+  const areas: Area[] = [];
 
-      // 1. Precise Street Level
-      if (address.road) {
+  // 1. Try Google Maps Geocoder if SDK is available (Much more accurate for Nigeria)
+  if (typeof window !== "undefined" && (window as any).google?.maps?.Geocoder) {
+    try {
+      const geocoder = new (window as any).google.maps.Geocoder();
+      const result: any = await new Promise((resolve, reject) => {
+        geocoder.geocode({ location: { lat, lng: lon } }, (results: any, status: any) => {
+          if (status === "OK" && results?.[0]) resolve(results[0]);
+          else reject(status);
+        });
+      });
+
+      const components = result.address_components || [];
+      const route = components.find((c: any) => c.types.includes("route"));
+      const neighborhood = components.find((c: any) => c.types.includes("neighborhood"));
+      const sublocality = components.find((c: any) => c.types.includes("sublocality") || c.types.includes("sublocality_level_1"));
+      const locality = components.find((c: any) => c.types.includes("locality"));
+
+      const desc = [locality?.long_name, "Nigeria"].filter(Boolean).join(", ");
+
+      if (route?.long_name) {
         areas.push({
           id: `live-geom-road-${now}`,
-          name: address.road,
-          slug: address.road.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-          lat: lat,
-          lng: lon,
+          name: route.long_name,
+          slug: route.long_name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          lat, lng: lon,
           description: desc,
           region: "Nearby Street"
         });
       }
 
-      // 2. Neighborhood Level
-      const nName = address.neighbourhood || address.suburb || address.city_district || address.town || address.village;
-      if (nName && nName !== address.road) {
+      const nName = neighborhood?.long_name || sublocality?.long_name;
+      if (nName && nName !== route?.long_name) {
         areas.push({
           id: `live-geom-hood-${now}`,
           name: nName,
           slug: nName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-          lat: lat,
-          lng: lon,
+          lat, lng: lon,
           description: desc,
           region: "Nearby Neighborhood"
         });
       }
-      
-      // Fallback if neither exists
-      if (areas.length === 0 && address.county) {
-         areas.push({
+
+      if (areas.length > 0) return areas;
+    } catch (e) {
+      console.warn("Google Maps nearby areas extraction failed, falling back to OSM", e);
+    }
+  }
+
+  // 2. OpenStreetMap Nominatim fallback
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
+      { headers: { "User-Agent": "LightPulse/1.0" } }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      const address = data.address || {};
+      const desc = [address.city || address.state, address.country].filter(Boolean).join(", ") || "Unknown Location";
+
+      if (address.road && address.road.toLowerCase() !== "ajebo") {
+        areas.push({
+          id: `live-geom-road-${now}`,
+          name: address.road,
+          slug: address.road.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          lat, lng: lon,
+          description: desc,
+          region: "Nearby Street"
+        });
+      }
+
+      const nName = address.neighbourhood || address.suburb || address.city_district || address.town || address.village;
+      if (nName && nName !== address.road && nName.toLowerCase() !== "ajebo") {
+        areas.push({
+          id: `live-geom-hood-${now}`,
+          name: nName,
+          slug: nName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+          lat, lng: lon,
+          description: desc,
+          region: "Nearby Neighborhood"
+        });
+      }
+
+      if (areas.length === 0 && address.county && address.county.toLowerCase() !== "ajebo") {
+        areas.push({
           id: `live-geom-county-${now}`,
           name: address.county,
           slug: address.county.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-          lat: lat,
-          lng: lon,
+          lat, lng: lon,
           description: desc,
           region: "Nearby Region"
         });
       }
 
+      if (areas.length === 0 && (address.city || address.state)) {
+        const fallbackName = address.city || address.state;
+        if (fallbackName.toLowerCase() !== "ajebo") {
+          areas.push({
+            id: `live-geom-city-${now}`,
+            name: fallbackName,
+            slug: fallbackName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+            lat, lng: lon,
+            description: desc,
+            region: "Nearby Region"
+          });
+        }
+      }
+
       return areas;
     }
-
-
   } catch (osmError) {
     console.error("OSM multi-point reverse geocoding failed:", osmError);
   }

@@ -18,6 +18,7 @@ interface GoogleMapProps {
   userLocation?: [number, number] | null;
   centerOnUser?: boolean;
   apiKey: string;
+  onSelectArea?: (areaId: string) => void;
 }
 
 export default function GoogleMapImpl({
@@ -25,7 +26,8 @@ export default function GoogleMapImpl({
   selectedAreaId,
   userLocation = null,
   centerOnUser = false,
-  apiKey
+  apiKey,
+  onSelectArea
 }: GoogleMapProps) {
   const dispatch = useAppDispatch();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -268,7 +270,11 @@ export default function GoogleMapImpl({
         latlng,
         markerHtml,
         () => {
-          dispatch(setSelectedAreaId(area.id));
+          if (onSelectArea) {
+            onSelectArea(area.id);
+          } else {
+            dispatch(setSelectedAreaId(area.id));
+          }
         },
         map
       );

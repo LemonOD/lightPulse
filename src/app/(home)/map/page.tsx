@@ -334,6 +334,7 @@ export default function MapPage() {
             selectedAreaId={selectedAreaId}
             userLocation={userLocation}
             centerOnUser={centerOnUser}
+            onSelectArea={handleSelectArea}
           />
         </div>
 

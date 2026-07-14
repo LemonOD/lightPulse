@@ -12,6 +12,7 @@ interface LeafletMapProps {
   selectedAreaId: string | null;
   userLocation?: [number, number] | null;
   centerOnUser?: boolean;
+  onSelectArea?: (areaId: string) => void;
 }
 
 function MapController({
@@ -51,7 +52,8 @@ export default function LeafletMapImpl({
   areas,
   selectedAreaId,
   userLocation = null,
-  centerOnUser = false
+  centerOnUser = false,
+  onSelectArea
 }: LeafletMapProps) {
   const dispatch = useAppDispatch();
 
@@ -172,7 +174,11 @@ export default function LeafletMapImpl({
             icon={getMarkerIcon(area.status, area.name)}
             eventHandlers={{
               click: () => {
-                dispatch(setSelectedAreaId(area.id));
+                if (onSelectArea) {
+                  onSelectArea(area.id);
+                } else {
+                  dispatch(setSelectedAreaId(area.id));
+                }
               }
             }}
           >

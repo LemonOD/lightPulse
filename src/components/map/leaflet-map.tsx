@@ -10,6 +10,7 @@ interface UnifiedMapProps {
   selectedAreaId: string | null;
   userLocation?: [number, number] | null;
   centerOnUser?: boolean;
+  onSelectArea?: (areaId: string) => void;
 }
 
 export default function LeafletMap(props: UnifiedMapProps) {

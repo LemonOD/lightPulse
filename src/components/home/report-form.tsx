@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { submitReport } from "@/store/slices/dataSlice";
+import { submitReport, addLiveAreas } from "@/store/slices/dataSlice";
 import { Zap, ZapOff, AlertTriangle, Loader2, LucideIcon } from "lucide-react";
 import { ReportStatus } from "@/lib/types";
 import { toast } from "react-hot-toast";
+import { saveHomeArea } from "@/lib/location-memory";
 import ReportStatusModal from "@/components/map/report-status-modal";
 
 const BASE_BUTTON_CLASS =
@@ -63,7 +64,15 @@ export default function ReportForm() {
   };
 
   const handleStatusSelect = async (status: ReportStatus) => {
-    if (!activeArea.id || isSubmitting) return;
+    if (isSubmitting) return;
+
+    // If location is not yet resolved, open modal to let user type it manually
+    if (!activeArea.id || activeArea.name === "Detecting location...") {
+      setModalStatus(status);
+      setComment(getDefaultComment(status));
+      setShowReportModal(true);
+      return;
+    }
 
     if (activeArea.name === "My Current Location") {
       setModalStatus(status);
@@ -75,29 +84,39 @@ export default function ReportForm() {
     await submitReportDirectly(status, activeArea.name);
   };
 
-  const submitReportDirectly = async (status: ReportStatus, areaName: string) => {
+  const submitReportDirectly = async (status: ReportStatus, areaName: string, customAreaId?: string) => {
     setIsSubmitting(true);
     setSubmittingStatus(status);
     try {
+      const targetAreaId = customAreaId || activeArea.id;
       const report = await dispatch(
         submitReport({
-          area_id: activeArea.id,
-          area_name: activeArea.name,
+          area_id: targetAreaId,
+          area_name: areaName,
           status: status,
-          comment: getDefaultComment(status),
+          comment: comment.trim() || getDefaultComment(status),
           ...(userLocation ? { latitude: userLocation[0], longitude: userLocation[1] } : {}),
         })
       ).unwrap();
 
-      if (report.area_id !== activeArea.id) {
+      if (report.area_id !== targetAreaId) {
         dispatch({ type: "app/setSelectedAreaId", payload: report.area_id });
         toast.success(`Report merged with a nearby community!`, {
           icon: "🔗",
         });
+        // Anchor user to the merged area as their new home
+        const mergedArea = { id: report.area_id, lat: userLocation?.[0] ?? (activeArea as any).lat ?? 6.5244, lng: userLocation?.[1] ?? (activeArea as any).lng ?? 3.3792 };
+        saveHomeArea(mergedArea.id, mergedArea.lat, mergedArea.lng);
       } else {
         toast.success(`Power status updated! Thank you for updating ${areaName}.`, {
           icon: "⚡",
         });
+        // Anchor user to this area as their home
+        const lat = (activeArea as any).lat ?? 6.5244;
+        const lng = (activeArea as any).lng ?? 3.3792;
+        if (targetAreaId) {
+          saveHomeArea(targetAreaId, lat, lng);
+        }
       }
     } catch (err) {
       console.error("Failed to submit report:", err);
@@ -110,10 +129,39 @@ export default function ReportForm() {
 
   const handleModalSubmit = async (e: React.FormEvent, customName?: string) => {
     e.preventDefault();
-    if (!activeArea.id || isSubmitting || !modalStatus) return;
+    if (isSubmitting || !modalStatus) return;
+
+    let targetAreaName = customName || activeArea.name;
+    let targetAreaId = activeArea.id;
+
+    // If no active area exists, create a custom manual area first
+    if (!targetAreaId || activeArea.name === "Detecting location...") {
+      const locationName = (customName || "").trim();
+      if (!locationName) {
+        toast.error("Please enter a location name.");
+        return;
+      }
+      
+      const customId = `custom-loc-manual-${Date.now()}`;
+      const newArea = {
+        id: customId,
+        name: locationName,
+        slug: locationName.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        lat: 6.5244, // Lagos center default fallback
+        lng: 3.3792,
+        description: "Manually Entered Location",
+        region: "Custom Location",
+      };
+
+      dispatch(addLiveAreas([newArea]));
+      dispatch({ type: "app/setSelectedAreaId", payload: customId });
+      
+      targetAreaId = customId;
+      targetAreaName = locationName;
+    }
     
     setShowReportModal(false);
-    await submitReportDirectly(modalStatus, customName || activeArea.name);
+    await submitReportDirectly(modalStatus, targetAreaName, targetAreaId);
   };
 
   return (

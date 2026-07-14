@@ -62,15 +62,18 @@ export default function ReportStatusModal({
 
   useEffect(() => {
     setMounted(true);
-    if (activeArea?.id?.startsWith("custom-loc-gps") || activeArea?.name === "My Current Location") {
-      setCustomAreaName(activeArea.name !== "My Current Location" ? activeArea.name : "");
+    if (activeArea?.id?.startsWith("custom-loc-gps") || activeArea?.name === "My Current Location" || activeArea?.id === "") {
+      setCustomAreaName(activeArea.name !== "My Current Location" && activeArea.name !== "Detecting location..." ? activeArea.name : "");
     }
   }, [activeArea]);
 
   if (!showReportModal || !activeArea || !mounted) return null;
 
-  const distance = userLocation ? getHaversineDistance(userLocation[0], userLocation[1], activeArea.lat, activeArea.lng) : null;
+  const hasCoords = activeArea.lat !== undefined && activeArea.lng !== undefined;
+  const distance = userLocation && hasCoords ? getHaversineDistance(userLocation[0], userLocation[1], activeArea.lat, activeArea.lng) : null;
   const isTooFar = distance !== null && distance > 4;
+
+  const isManualSetup = activeArea.id === "" || activeArea.name === "Detecting location...";
 
   return createPortal(
     <div className="fixed inset-0 z-9999 flex items-center justify-center px-4">
@@ -92,11 +95,11 @@ export default function ReportStatusModal({
             New Power Report
           </span>
           <h3 className="text-xl font-extrabold text-slate-800 mt-2">
-            Report for {activeArea.name}
+            {isManualSetup ? "Specify Your Location" : `Report for ${activeArea.name}`}
           </h3>
         </div>
 
-        <form onSubmit={(e) => handleReportSubmit(e, (activeArea.id?.startsWith("custom-loc-gps") || activeArea.name === "My Current Location") ? customAreaName : undefined)} className="flex flex-col gap-5">
+        <form onSubmit={(e) => handleReportSubmit(e, (activeArea.id?.startsWith("custom-loc-gps") || activeArea.name === "My Current Location" || isManualSetup) ? customAreaName : undefined)} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
               Select Status
@@ -112,8 +115,8 @@ export default function ReportStatusModal({
                     onClick={() => setReportStatus(s.id)}
                     className={`flex flex-col items-center justify-center py-3 rounded-xl border text-[10px] font-bold gap-1.5 transition-all duration-200 transform active:scale-95 cursor-pointer ${
                       isActive
-                        ? s.activeColor
-                        : `bg-white border-slate-200 text-slate-600 ${s.hoverColor}`
+                         ? s.activeColor
+                         : `bg-white border-slate-200 text-slate-600 ${s.hoverColor}`
                     }`}
                   >
                     <SIcon className="h-4 w-4" />
@@ -124,13 +127,14 @@ export default function ReportStatusModal({
             </div>
           </div>
 
-          {(activeArea.id?.startsWith("custom-loc-gps") || activeArea.name === "My Current Location") && (
+          {(activeArea.id?.startsWith("custom-loc-gps") || activeArea.name === "My Current Location" || isManualSetup) && (
             <div className="flex flex-col gap-2 mb-1">
               <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                Location Name (Optional)
+                Location Name {isManualSetup && "(Required)"}
               </label>
               <input
                 type="text"
+                required={isManualSetup}
                 value={customAreaName}
                 onChange={(e) => {
                   setCustomAreaName(e.target.value);

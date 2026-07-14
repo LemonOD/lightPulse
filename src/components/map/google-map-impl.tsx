@@ -292,7 +292,7 @@ export default function GoogleMapImpl({
       const userOverlay = new UserLocationOverlay(userLatLng, pulsingHtml, map);
       userOverlayRef.current = userOverlay;
     }
-  }, [areas, userLocation, loaded, dispatch]);
+  }, [areas, userLocation, selectedAreaId, loaded, dispatch]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;

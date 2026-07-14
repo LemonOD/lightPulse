@@ -6,6 +6,7 @@ import RealtimeProvider from "@/components/providers/realtime-provider";
 import Header from "@/components/layout/header";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Toaster } from "react-hot-toast";
+import PWAInstallBanner from "@/components/shared/pwa-install-banner";
 import "./globals.css";
 
 
@@ -101,6 +102,7 @@ export default function RootLayout({
               {children}
             </div>
             <BottomNav />
+            <PWAInstallBanner />
           </RealtimeProvider>
         </StoreProvider>
       </body>

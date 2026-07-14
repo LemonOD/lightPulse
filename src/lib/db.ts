@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { Area, Report, ReportStatus } from "./types";
 import { getDeviceId } from "./device";
+import { normalizeAreaToH3 } from "./h3-utils";
 
 // Define a standard service interface
 export interface IDatabaseService {
@@ -226,16 +227,17 @@ class SupabaseDatabaseService implements IDatabaseService {
   }
 
   async saveCustomArea(area: Area): Promise<void> {
+    const normalizedArea = normalizeAreaToH3(area);
     const { error } = await supabase
       .from("areas")
       .upsert({
-        id: area.id,
-        name: area.name,
-        slug: area.slug,
-        lat: area.lat,
-        lng: area.lng,
-        region: area.region,
-        description: area.description
+        id: normalizedArea.id,
+        name: normalizedArea.name,
+        slug: normalizedArea.slug,
+        lat: normalizedArea.lat,
+        lng: normalizedArea.lng,
+        region: normalizedArea.region,
+        description: normalizedArea.description
       });
 
     if (error) {

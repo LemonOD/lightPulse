@@ -3,8 +3,10 @@
 import { Search, Plus } from "lucide-react";
 import { Area, ReportStatus } from "@/lib/types";
 import AddressAutocomplete, { GeocodedPlace } from "../shared/address-autocomplete";
-import { useAppDispatch } from "@/store";
 import { addLiveAreas } from "@/store/slices/dataSlice";
+import UserProfileCard from "../home/user-profile-card";
+import UptimeChart from "../shared/uptime-chart";
+import { useAppSelector, useAppDispatch } from "@/store";
 
 interface MapSidebarProps {
   mapSearch: string;
@@ -28,6 +30,8 @@ export default function MapSidebar({
   getBadgeColor,
 }: MapSidebarProps) {
   const dispatch = useAppDispatch();
+  const allReports = useAppSelector((state) => state.data.reports);
+  const activeAreaReports = allReports.filter((r) => activeArea && r.area_id === activeArea.id);
 
   const handleSelectPlace = (place: GeocodedPlace) => {
     const selectedArea = {
@@ -127,13 +131,17 @@ export default function MapSidebar({
 
       {/* Action Button: "+ Report Status" */}
       {activeArea && (
-        <button
-          onClick={handleOpenReportModal}
-          className="w-full h-12 bg-[#22C55E] hover:bg-emerald-600 text-white font-bold text-xs tracking-wider rounded-2xl shadow-md shadow-emerald-100 transition-all flex items-center justify-center gap-2 mt-4 active:scale-95 cursor-pointer"
-        >
-          <Plus className="h-4 w-4" />
-          Report Status
-        </button>
+        <div className="flex flex-col gap-4 mt-4">
+          <UserProfileCard />
+          <UptimeChart reports={activeAreaReports} />
+          <button
+            onClick={handleOpenReportModal}
+            className="w-full h-12 bg-[#22C55E] hover:bg-emerald-600 text-white font-bold text-xs tracking-wider rounded-2xl shadow-md shadow-emerald-100 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            Report Status
+          </button>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Area, Report, ReportStatus } from "@/lib/types";
 import { dbService } from "@/lib/db";
+import { normalizeAreaToH3 } from "@/lib/h3-utils";
 
 interface DataState {
   areas: Area[];
@@ -43,10 +44,13 @@ export const submitReport = createAsyncThunk(
       // If the area is dynamically generated from location services (OSM/Search/GPS),
       // we must upsert it into the Supabase database first to satisfy the Foreign Key constraint.
       const state: any = getState();
-      const activeArea = state.data.areas.find((a: Area) => a.id === reportData.area_id);
+      let activeArea = state.data.areas.find((a: Area) => a.id === reportData.area_id);
       
       if (activeArea && (activeArea.id.startsWith("osm-") || activeArea.id.startsWith("search-") || activeArea.id.startsWith("custom-") || activeArea.id.startsWith("live-"))) {
+        activeArea = normalizeAreaToH3(activeArea);
         await dbService.saveCustomArea(activeArea);
+        // Update the reportData to use the new H3 snapped area_id
+        reportData = { ...reportData, area_id: activeArea.id };
       }
 
       const report = await dbService.createReport(reportData);
@@ -90,8 +94,9 @@ const dataSlice = createSlice({
   reducers: {
     addLiveAreas: (state, action: PayloadAction<Area[]>) => {
       action.payload.forEach((newArea) => {
-        if (!state.areas.some(a => a.id === newArea.id || a.name.toLowerCase().trim() === newArea.name.toLowerCase().trim())) {
-          state.areas.push(newArea);
+        const normalizedArea = normalizeAreaToH3(newArea);
+        if (!state.areas.some(a => a.id === normalizedArea.id || a.name.toLowerCase().trim() === normalizedArea.name.toLowerCase().trim())) {
+          state.areas.push(normalizedArea);
         }
       });
     },

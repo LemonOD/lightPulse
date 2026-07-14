@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
+import { setSelectedAreaId, setUserLocation, triggerPwaPrompt } from "@/store/slices/appSlice";
 import { submitReport, addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import { GeocodedPlace } from "@/components/shared/address-autocomplete";
 import { getAreaStatusFromReports } from "@/lib/db";
@@ -13,6 +13,7 @@ import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, 
 import { getDeviceId } from "@/lib/device";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 import { saveHomeArea } from "@/lib/location-memory";
+import { formatDistanceToNow, differenceInMinutes } from "date-fns";
 
 // Helper utility (already defined in @/lib/geolocation but imported/bound here)
 
@@ -90,15 +91,23 @@ export default function MapPage() {
 
       let timeAgo = "No recent data";
       let detailLabel = "";
+      let isStale = false;
       let confirmsCount = areaReports.reduce((sum, r) => sum + r.confidence_score, 0);
 
       const latestReport = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
       if (latestReport) {
-        // eslint-disable-next-line react-hooks/purity
-        const diffMins = Math.max(1, Math.round((Date.now() - new Date(latestReport.created_at).getTime()) / (1000 * 60)));
-        if (diffMins < 60) timeAgo = `Last updated: ${diffMins} mins ago`;
-        else timeAgo = `Last updated: ${Math.round(diffMins / 60)} hours ago`;
+        const diffMins = differenceInMinutes(new Date(), new Date(latestReport.created_at));
+        if (diffMins < 1) {
+          timeAgo = "Reported just now";
+        } else {
+          timeAgo = `Reported ${formatDistanceToNow(new Date(latestReport.created_at))} ago`;
+        }
+        
+        if (diffMins > 120) {
+           timeAgo += " (Stale)";
+           isStale = true;
+        }
       }
 
       detailLabel = confirmsCount > 0 ? `${confirmsCount} community verifications` : "Pending status validation";
@@ -116,6 +125,7 @@ export default function MapPage() {
         ...area,
         status,
         timeAgo,
+        isStale,
         detailLabel,
         confirmsCount,
         distanceValue
@@ -277,6 +287,7 @@ export default function MapPage() {
 
       setShowReportModal(false);
       setComment("");
+      dispatch(triggerPwaPrompt());
     } catch (err) {
       console.error(err);
       toast.error("Failed to register power status. Please try again.");

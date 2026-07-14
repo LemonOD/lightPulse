@@ -7,6 +7,7 @@ import Header from "@/components/layout/header";
 import BottomNav from "@/components/layout/bottom-nav";
 import { Toaster } from "react-hot-toast";
 import PWAInstallBanner from "@/components/shared/pwa-install-banner";
+import OfflineBanner from "@/components/shared/offline-banner";
 import "./globals.css";
 
 
@@ -97,6 +98,7 @@ export default function RootLayout({
                 },
               }}
             />
+            <OfflineBanner />
             <Header />
             <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide">
               {children}

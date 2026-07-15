@@ -53,6 +53,7 @@ export default function MapPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLegendMobile, setShowLegendMobile] = useState(false);
   const [centerOnUser, setCenterOnUser] = useState(false);
+  const [isAutocompleteOpen, setIsAutocompleteOpen] = useState(false);
 
   // Global auto-location: registers GPS position & "My Current Location" from any page
   useAutoLocation();
@@ -356,16 +357,19 @@ export default function MapPage() {
           showLegendMobile={showLegendMobile}
           setShowLegendMobile={setShowLegendMobile}
           handleSelectPlace={handleSelectPlace}
+          onAutocompleteOpenChange={setIsAutocompleteOpen}
         />
 
         {/* Floating Search Results Dropdown List on Mobile */}
-        <SearchResultsList
-          mapSearch={mapSearch}
-          setMapSearch={setMapSearch}
-          filteredMapAreas={filteredMapAreas}
-          handleSelectArea={handleSelectArea}
-          getBadgeColor={getBadgeColor}
-        />
+        {!isAutocompleteOpen && (
+          <SearchResultsList
+            mapSearch={mapSearch}
+            setMapSearch={setMapSearch}
+            filteredMapAreas={filteredMapAreas}
+            handleSelectArea={handleSelectArea}
+            getBadgeColor={getBadgeColor}
+          />
+        )}
 
         {/* Floating Mobile Bottom Details Card (Only visible on mobile) */}
         <MapDetailsCard

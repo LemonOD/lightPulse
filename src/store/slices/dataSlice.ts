@@ -17,7 +17,7 @@ const initialState: DataState = {
   reports: [],
   historicalReports: {},
   historicalLoading: false,
-  loading: false,
+  loading: true,
   error: null,
 };
 

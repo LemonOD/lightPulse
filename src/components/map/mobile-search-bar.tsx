@@ -9,6 +9,7 @@ interface MobileSearchBarProps {
   showLegendMobile: boolean;
   setShowLegendMobile: React.Dispatch<React.SetStateAction<boolean>>;
   handleSelectPlace: (place: GeocodedPlace) => void;
+  onAutocompleteOpenChange?: (isOpen: boolean) => void;
 }
 
 export default function MobileSearchBar({
@@ -17,6 +18,7 @@ export default function MobileSearchBar({
   showLegendMobile,
   setShowLegendMobile,
   handleSelectPlace,
+  onAutocompleteOpenChange,
 }: MobileSearchBarProps) {
   return (
     <div className="absolute top-4 left-4 right-4 z-10 md:hidden bg-white border border-slate-100 rounded-2xl shadow-lg h-14 flex items-center justify-between px-3 pointer-events-auto">
@@ -26,6 +28,7 @@ export default function MobileSearchBar({
         onClear={() => setMapSearch("")}
         onChangeQuery={setMapSearch}
         initialValue={mapSearch}
+        onOpenChange={onAutocompleteOpenChange}
         className="relative flex-1 min-w-0 group"
         inputClassName="w-full h-11 pl-9 pr-8 rounded-xl bg-slate-50 border border-slate-100 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:bg-white focus:border-emerald-500 transition-all text-slate-800 leading-none"
         iconSizeClassName="h-4.5 w-4.5"

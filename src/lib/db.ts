@@ -7,6 +7,7 @@ import { normalizeAreaToH3 } from "./h3-utils";
 export interface IDatabaseService {
   getAreas(): Promise<Area[]>;
   getReports(): Promise<Report[]>;
+  getHistoricalReports(areaId: string, days: number): Promise<Report[]>;
   createReport(report: Omit<Report, "id" | "created_at" | "confidence_score" | "device_id" | "expires_at">): Promise<Report>;
   confirmReport(reportId: string): Promise<number>;
   saveCustomArea(area: Area): Promise<void>;
@@ -113,6 +114,55 @@ class SupabaseDatabaseService implements IDatabaseService {
         expires_at: item.expires_at,
         confidence_score: item.confidence_score || 1,
         has_confirmed: confirmedSet.has(item.id)
+      });
+    }
+
+    return formattedReports;
+  }
+
+  async getHistoricalReports(areaId: string, days: number): Promise<Report[]> {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - days);
+    const dateString = pastDate.toISOString();
+
+    const { data, error } = await supabase
+      .from("reports")
+      .select(`
+        id,
+        area_id,
+        area:areas(name),
+        status,
+        comment,
+        latitude,
+        longitude,
+        created_at,
+        device_id,
+        expires_at,
+        confidence_score
+      `)
+      .eq("area_id", areaId)
+      .gt("created_at", dateString)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching historical reports:", error);
+      return [];
+    }
+
+    const formattedReports: Report[] = [];
+    for (const item of (data as any[])) {
+      formattedReports.push({
+        id: item.id,
+        area_id: item.area_id,
+        area_name: item.area?.name || "Unknown Area",
+        status: item.status as ReportStatus,
+        comment: item.comment || "",
+        latitude: item.latitude,
+        longitude: item.longitude,
+        created_at: item.created_at,
+        device_id: item.device_id,
+        expires_at: item.expires_at,
+        confidence_score: item.confidence_score || 1,
       });
     }
 

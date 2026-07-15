@@ -15,8 +15,8 @@ export default function Home() {
       <div className="flex flex-col gap-6 md:hidden">
         <StatusCard />
         <ReportForm />
-        <ActivityFeed />
         <UptimeTrend />
+        <ActivityFeed />
       </div>
 
       <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-8">

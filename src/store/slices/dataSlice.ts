@@ -1,11 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Area, Report, ReportStatus } from "@/lib/types";
-import { dbService } from "@/lib/db";
+import { dbService, getAreaStatusFromReports } from "@/lib/db";
 import { normalizeAreaToH3 } from "@/lib/h3-utils";
 
 interface DataState {
   areas: Area[];
   reports: Report[];
+  historicalReports: Record<string, Report[]>;
+  historicalLoading: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -13,6 +15,8 @@ interface DataState {
 const initialState: DataState = {
   areas: [],
   reports: [],
+  historicalReports: {},
+  historicalLoading: false,
   loading: false,
   error: null,
 };
@@ -29,6 +33,19 @@ export const fetchInitialData = createAsyncThunk(
       return { areas, reports };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load initial data";
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+export const fetchHistoricalData = createAsyncThunk(
+  "data/fetchHistorical",
+  async ({ areaId, days }: { areaId: string; days: number }, { rejectWithValue }) => {
+    try {
+      const reports = await dbService.getHistoricalReports(areaId, days);
+      return { areaId, reports };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to load historical data";
       return rejectWithValue(msg);
     }
   }
@@ -150,13 +167,28 @@ const dataSlice = createSlice({
         });
         
         state.areas = Array.from(newAreasMap.values());
+        
+        // Re-process current status based on fetched reports
+        state.areas.forEach(a => {
+          a.current_status = getAreaStatusFromReports(a.id, action.payload.reports) as any;
+        });
+
         state.reports = action.payload.reports;
       })
       .addCase(fetchInitialData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+      .addCase(fetchHistoricalData.pending, (state) => {
+        state.historicalLoading = true;
+      })
+      .addCase(fetchHistoricalData.fulfilled, (state, action) => {
+        state.historicalLoading = false;
+        state.historicalReports[action.payload.areaId] = action.payload.reports;
+      })
+      .addCase(fetchHistoricalData.rejected, (state) => {
+        state.historicalLoading = false;
+      })
       .addCase(submitReport.fulfilled, (state, action: PayloadAction<Report>) => {
         const idx = state.reports.findIndex(r => r.id === action.payload.id);
         if (idx !== -1) {

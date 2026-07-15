@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer, Cell } from "rechar
 import { Report } from "@/lib/types";
 import { differenceInHours } from "date-fns";
 
-export default function UptimeChart({ reports }: { reports: Report[] }) {
+export default function UptimeChart({ reports, currentStatus }: { reports: Report[], currentStatus?: string }) {
   const data = useMemo(() => {
     // Generate an array of the last 12 hours
     const hours = Array.from({ length: 12 }).map((_, i) => {
@@ -20,7 +20,10 @@ export default function UptimeChart({ reports }: { reports: Report[] }) {
     });
 
     // Populate data with report statuses
-    reports.forEach((report) => {
+    // Sort ascending so the newest report in the hour bucket overwrites the older ones
+    const sortedReports = [...reports].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    
+    sortedReports.forEach((report) => {
       const diffHours = differenceInHours(new Date(), new Date(report.created_at));
       if (diffHours >= 0 && diffHours < 12) {
         const index = 11 - diffHours;
@@ -34,20 +37,26 @@ export default function UptimeChart({ reports }: { reports: Report[] }) {
       }
     });
 
-    // Fill blanks with UNKNOWN or carry over previous state
-    let lastKnown = 0;
-    for (let i = 0; i < hours.length; i++) {
+    // Determine initial backward state
+    let currentKnown = 0;
+    if (currentStatus === "LIGHT_AVAILABLE") currentKnown = 100;
+    else if (currentStatus === "LOW_VOLTAGE") currentKnown = 50;
+    else if (currentStatus === "LIGHT_OUT") currentKnown = 10;
+    else if (hours[11].uptime > 0) currentKnown = hours[11].uptime;
+
+    // Fill blanks with UNKNOWN or carry over state backwards
+    for (let i = hours.length - 1; i >= 0; i--) {
       if (hours[i].uptime > 0) {
-        lastKnown = hours[i].uptime;
-      } else if (lastKnown > 0) {
-        hours[i].uptime = lastKnown;
+        currentKnown = hours[i].uptime;
+      } else if (currentKnown > 0) {
+        hours[i].uptime = currentKnown;
       } else {
         hours[i].uptime = 5; // Minimal bar for unknown
       }
     }
 
     return hours;
-  }, [reports]);
+  }, [reports, currentStatus]);
 
   const getColor = (uptime: number) => {
     if (uptime >= 80) return "#10b981"; // emerald-500

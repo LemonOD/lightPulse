@@ -132,8 +132,8 @@ export default function MapSidebar({
       {/* Action Button: "+ Report Status" */}
       {activeArea && (
         <div className="flex flex-col gap-4 mt-4">
-          <UserProfileCard />
-          <UptimeChart reports={activeAreaReports} />
+          {/* <UserProfileCard /> */}
+          <UptimeChart reports={activeAreaReports} currentStatus={activeArea.status} />
           <button
             onClick={handleOpenReportModal}
             className="w-full h-12 bg-[#22C55E] hover:bg-emerald-600 text-white font-bold text-xs tracking-wider rounded-2xl shadow-md shadow-emerald-100 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"

@@ -139,7 +139,7 @@ export default function ReportStatusModal({
                 onChange={(e) => {
                   setCustomAreaName(e.target.value);
                 }}
-                placeholder="e.g. Isiu Ikorodu"
+                placeholder="e.g. Yaba, Lagos"
                 className="w-full px-4 py-3 rounded-2xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-300 text-xs font-semibold text-slate-700"
               />
             </div>

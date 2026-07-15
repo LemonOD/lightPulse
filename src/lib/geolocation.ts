@@ -157,7 +157,7 @@ async function fetchOSMReverseGeocode(lat: number, lng: number): Promise<string>
         address.country
       ];
 
-      const validName = candidates.find(c => c && typeof c === 'string' && c.toLowerCase() !== "ajebo");
+      const validName = candidates.find(c => c && typeof c === 'string' && !c.toLowerCase().includes("ajebo"));
       return validName || "Unknown Location";
     }
   } catch (err) {
@@ -233,7 +233,7 @@ export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Pro
       const address = data.address || {};
       const desc = [address.city || address.state, address.country].filter(Boolean).join(", ") || "Unknown Location";
 
-      if (address.road && address.road.toLowerCase() !== "ajebo") {
+      if (address.road && !address.road.toLowerCase().includes("ajebo")) {
         areas.push({
           id: `live-geom-road-${now}`,
           name: address.road,
@@ -245,7 +245,7 @@ export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Pro
       }
 
       const nName = address.neighbourhood || address.suburb || address.city_district || address.town || address.village;
-      if (nName && nName !== address.road && nName.toLowerCase() !== "ajebo") {
+      if (nName && nName !== address.road && !nName.toLowerCase().includes("ajebo")) {
         areas.push({
           id: `live-geom-hood-${now}`,
           name: nName,
@@ -256,7 +256,7 @@ export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Pro
         });
       }
 
-      if (areas.length === 0 && address.county && address.county.toLowerCase() !== "ajebo") {
+      if (areas.length === 0 && address.county && !address.county.toLowerCase().includes("ajebo")) {
         areas.push({
           id: `live-geom-county-${now}`,
           name: address.county,
@@ -269,7 +269,7 @@ export async function fetchLiveNearbyAreasFromOSM(lat: number, lon: number): Pro
 
       if (areas.length === 0 && (address.city || address.state)) {
         const fallbackName = address.city || address.state;
-        if (fallbackName.toLowerCase() !== "ajebo") {
+        if (!fallbackName.toLowerCase().includes("ajebo")) {
           areas.push({
             id: `live-geom-city-${now}`,
             name: fallbackName,

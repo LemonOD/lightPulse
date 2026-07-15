@@ -59,22 +59,36 @@ export default function MapPage() {
   useAutoLocation();
 
   useEffect(() => {
-    if (!userLocation || areas.length === 0) return;
-    
-    let closestArea = areas[0];
-    let minDistance = Infinity;
-    areas.forEach((area) => {
-      const dist = getHaversineDistance(userLocation[0], userLocation[1], area.lat, area.lng);
-      if (dist < minDistance) {
-        minDistance = dist;
-        closestArea = area;
+    if (!selectedAreaId && areas.length > 0 && !isLocating) {
+      if (userLocation) {
+        let nearest = areas[0];
+        let minDist = Infinity;
+        areas.forEach(a => {
+          if (a.lat && a.lng) {
+            const d = getHaversineDistance(userLocation[0], userLocation[1], a.lat, a.lng);
+            if (d < minDist) {
+              minDist = d;
+              nearest = a;
+            }
+          }
+        });
+        dispatch(setSelectedAreaId(nearest.id));
+        setCenterOnUser(true);
+      } else {
+        // Fallback to home area if no GPS
+        if (homeAreaId && areas.some(a => a.id === homeAreaId)) {
+          dispatch(setSelectedAreaId(homeAreaId));
+        } else {
+          // Fallback to a major hub instead of the first alphabetical (e.g., Ajebo)
+          const fallback = areas.find(a => a.name.toLowerCase().includes("yaba")) ||
+                           areas.find(a => a.name.toLowerCase().includes("lagos")) ||
+                           areas[0];
+          dispatch(setSelectedAreaId(fallback.id));
+        }
       }
-    });
-
-    dispatch(setSelectedAreaId(closestArea.id));
-    setCenterOnUser(true);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userLocation]);
+  }, [selectedAreaId, areas, userLocation, isLocating, dispatch, homeAreaId]);
 
   const areasWithStatus = useMemo(() => {
     const uniqueAreasMap = new Map<string, typeof areas[0]>();
@@ -87,7 +101,11 @@ export default function MapPage() {
     const uniqueAreas = Array.from(uniqueAreasMap.values());
 
     return uniqueAreas.map(area => {
-      const status = getAreaStatusFromReports(area.id, reports);
+      let status = getAreaStatusFromReports(area.id, reports);
+      if (status === "UNKNOWN" && (area as any).current_status && (area as any).current_status !== "UNKNOWN") {
+        status = (area as any).current_status;
+      }
+      
       const areaReports = reports.filter(r => r.area_id === area.id);
 
       let timeAgo = "No recent data";
@@ -150,8 +168,19 @@ export default function MapPage() {
   }, [areasWithStatus, mapSearch, userLocation]);
 
   const activeArea = useMemo(() => {
-    return areasWithStatus.find(a => a.id === selectedAreaId) || areasWithStatus[0] || null;
-  }, [areasWithStatus, selectedAreaId]);
+    let targetId = selectedAreaId;
+    if (!targetId && homeAreaId) targetId = homeAreaId;
+
+    if (targetId) {
+      const found = areasWithStatus.find(a => a.id === targetId);
+      if (found) return found;
+    }
+    
+    // Fallback to a major hub instead of the first alphabetical (e.g., Ajebo)
+    return areasWithStatus.find(a => a.name.toLowerCase().includes("yaba")) ||
+           areasWithStatus.find(a => a.name.toLowerCase().includes("lagos")) ||
+           areasWithStatus[0] || null;
+  }, [areasWithStatus, selectedAreaId, homeAreaId]);
 
   const handleSelectArea = (areaId: string) => {
     setCenterOnUser(false); // Stop locking camera to user coordinate

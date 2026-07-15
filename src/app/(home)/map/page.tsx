@@ -45,6 +45,8 @@ export default function MapPage() {
   const reports = useAppSelector((state) => state.data.reports);
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
   const userLocation = useAppSelector((state) => state.app.userLocation);
+  const isLocating = useAppSelector((state) => state.app.isLocating);
+  const homeAreaId = useAppSelector((state) => state.app.homeAreaId);
 
   const [mapSearch, setMapSearch] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);

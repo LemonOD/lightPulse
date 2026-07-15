@@ -93,7 +93,7 @@ export default function UptimeTrend() {
       return defaultData;
     }
 
-    if (timeframe !== "24H") {
+    {
       let totalDays = 0;
       let numBins = 0;
 

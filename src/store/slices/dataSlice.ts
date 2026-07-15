@@ -30,7 +30,12 @@ export const fetchInitialData = createAsyncThunk(
         dbService.getAreas(),
         dbService.getReports()
       ]);
-      return { areas, reports };
+      
+      // Filter out polluted entries from previous OSM bug
+      const validAreas = areas.filter(a => !a.name.toLowerCase().includes('ajebo'));
+      const validReports = reports.filter(r => !r.area_name.toLowerCase().includes('ajebo'));
+      
+      return { areas: validAreas, reports: validReports };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load initial data";
       return rejectWithValue(msg);

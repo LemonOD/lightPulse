@@ -155,7 +155,7 @@ export default function UptimeTrend() {
     // For historical, a bin represents binSizeDays. 
     // If a bin is "LIGHT_AVAILABLE", say it had roughly 12 hours of power.
     // Realistically, we'd need hourly data to compute exactly, but for this demo:
-    const numBins = timeframe === "24H" ? 12 : (timeframe === "1Y" ? 12 : (timeframe === "7D" ? 7 : 30));
+    const numBins = timeframe === "1Y" ? 12 : (timeframe === "7D" ? 7 : 30);
     return (availableBins * 12 / numBins).toFixed(1);
   }, [uptimeData, timeframe]);
 

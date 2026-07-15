@@ -6,7 +6,7 @@ import { UptimeHour, ReportStatus, Report, getDisplayStatus } from "@/lib/types"
 import { ArrowUp, Loader2 } from "lucide-react";
 import { fetchHistoricalData } from "@/store/slices/dataSlice";
 
-type Timeframe = "24H" | "7D" | "30D";
+type Timeframe = "24H" | "7D" | "30D" | "90D" | "1Y";
 
 export default function UptimeTrend() {
   const dispatch = useAppDispatch();
@@ -25,7 +25,12 @@ export default function UptimeTrend() {
 
   useEffect(() => {
     if (activeArea.id !== "none" && timeframe !== "24H") {
-      const daysToFetch = timeframe === "7D" ? 7 : 30;
+      let daysToFetch = 0;
+      if (timeframe === "7D") daysToFetch = 7;
+      else if (timeframe === "30D") daysToFetch = 30;
+      else if (timeframe === "90D") daysToFetch = 90;
+      else if (timeframe === "1Y") daysToFetch = 365;
+
       const maxFetched = fetchedMapRef.current[activeArea.id] || 0;
       
       if (daysToFetch > maxFetched) {
@@ -37,7 +42,7 @@ export default function UptimeTrend() {
 
   // Compute actual dynamic trend based on real data
   const uptimeData = useMemo(() => {
-    const isHistorical = timeframe === "7D" || timeframe === "30D";
+    const isHistorical = timeframe !== "24H";
     const areaReports = isHistorical 
       ? (historicalReports[activeArea.id] || allReports.filter(r => r.area_id === activeArea.id))
       : allReports.filter(r => r.area_id === activeArea.id);
@@ -88,13 +93,26 @@ export default function UptimeTrend() {
       return defaultData;
     }
 
-    if (timeframe === "7D" || timeframe === "30D") {
-      const days = timeframe === "7D" ? 7 : 30;
-      const defaultData: UptimeHour[] = Array.from({ length: days }).map((_, i) => {
+    if (timeframe !== "24H") {
+      let totalDays = 0;
+      let numBins = 0;
+
+      if (timeframe === "7D") { totalDays = 7; numBins = 7; }
+      else if (timeframe === "30D") { totalDays = 30; numBins = 30; }
+      else if (timeframe === "90D") { totalDays = 90; numBins = 30; }
+      else if (timeframe === "1Y") { totalDays = 365; numBins = 12; }
+      
+      const binSizeDays = totalDays / numBins;
+
+      const defaultData: UptimeHour[] = Array.from({ length: numBins }).map((_, i) => {
         const d = new Date();
-        d.setDate(d.getDate() - (days - 1 - i));
+        d.setDate(d.getDate() - Math.round((numBins - 1 - i) * binSizeDays));
         return {
-          hour: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          hour: timeframe === "1Y" 
+            ? d.toLocaleDateString('en-US', { month: 'short' })
+            : timeframe === "90D"
+            ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           status: "UNKNOWN" as ReportStatus
         };
       });
@@ -102,9 +120,9 @@ export default function UptimeTrend() {
       if (activeArea.id === "none" || areaReports.length === 0) return defaultData;
 
       const now = new Date();
-      for (let i = 0; i < days; i++) {
-        const binStart = new Date(now.getTime() - (days - i) * 24 * 60 * 60 * 1000);
-        const binEnd = new Date(now.getTime() - (days - 1 - i) * 24 * 60 * 60 * 1000);
+      for (let i = 0; i < numBins; i++) {
+        const binStart = new Date(now.getTime() - (numBins - i) * binSizeDays * 24 * 60 * 60 * 1000);
+        const binEnd = new Date(now.getTime() - (numBins - 1 - i) * binSizeDays * 24 * 60 * 60 * 1000);
         
         const reportInBin = areaReports.find(r => {
           const rDate = new Date(r.created_at);
@@ -134,10 +152,11 @@ export default function UptimeTrend() {
     if (availableBins === 0) return "0.0";
     if (timeframe === "24H") return (availableBins * 2).toFixed(1);
     
-    // For 7D and 30D, a bin represents a full day. Let's make an approximation:
-    // If a day is "LIGHT_AVAILABLE", say it had roughly 12 hours of power.
+    // For historical, a bin represents binSizeDays. 
+    // If a bin is "LIGHT_AVAILABLE", say it had roughly 12 hours of power.
     // Realistically, we'd need hourly data to compute exactly, but for this demo:
-    return (availableBins * 12 / (timeframe === "7D" ? 7 : 30)).toFixed(1);
+    const numBins = timeframe === "24H" ? 12 : (timeframe === "1Y" ? 12 : (timeframe === "7D" ? 7 : 30));
+    return (availableBins * 12 / numBins).toFixed(1);
   }, [uptimeData, timeframe]);
 
   const percentageTrend = useMemo(() => {
@@ -186,7 +205,7 @@ export default function UptimeTrend() {
           </div>
           
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-            {(["24H", "7D", "30D"] as Timeframe[]).map((tf) => (
+            {(["24H", "7D", "30D", "90D", "1Y"] as Timeframe[]).map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}

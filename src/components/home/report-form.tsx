@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { submitReport, addLiveAreas } from "@/store/slices/dataSlice";
+import { triggerPwaPrompt } from "@/store/slices/appSlice";
 import { Zap, ZapOff, AlertTriangle, Loader2, LucideIcon } from "lucide-react";
 import { ReportStatus } from "@/lib/types";
 import { toast } from "react-hot-toast";
@@ -118,6 +119,7 @@ export default function ReportForm() {
           saveHomeArea(targetAreaId, lat, lng);
         }
       }
+      dispatch(triggerPwaPrompt());
     } catch (err) {
       console.error("Failed to submit report:", err);
       toast.error("Failed to register power status. Please try again.");

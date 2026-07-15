@@ -30,6 +30,7 @@ interface AddressAutocompleteProps {
   onClear?: () => void;
   onChangeQuery?: (val: string) => void;
   initialValue?: string;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 // Custom debounce utility
@@ -58,7 +59,8 @@ export default function AddressAutocomplete({
   onSelectPlace,
   onClear,
   onChangeQuery,
-  initialValue = ""
+  initialValue = "",
+  onOpenChange
 }: AddressAutocompleteProps) {
   const [query, setQuery] = useState(initialValue);
   const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([]);
@@ -68,6 +70,12 @@ export default function AddressAutocomplete({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const debouncedQuery = useDebounce(query, 300);
+
+  useEffect(() => {
+    if (onOpenChange) {
+      onOpenChange(isOpen && suggestions.length > 0);
+    }
+  }, [isOpen, suggestions.length, onOpenChange]);
 
   // Sync raw input text updates with parent immediately for local list filtering
   useEffect(() => {

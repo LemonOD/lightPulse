@@ -4,7 +4,7 @@ import { Zap, ZapOff, AlertTriangle, ChevronRight } from "lucide-react";
 import { Area, ReportStatus } from "@/lib/types";
 
 interface MapDetailsCardProps {
-  activeArea: Area & { status: ReportStatus; timeAgo: string; detailLabel: string } | null;
+  activeArea: Area & { status: ReportStatus; timeAgo: string; detailLabel: string; isStale?: boolean } | null;
   handleOpenReportModal: () => void;
 }
 
@@ -42,7 +42,7 @@ export default function MapDetailsCard({
           <span className="text-xs font-black text-slate-800 tracking-tight">
             {activeArea.name === "Yaba" ? "Yaba Tech" : activeArea.name}, Lagos
           </span>
-          <span className="text-[9px] font-medium text-slate-400 leading-tight">
+          <span className={`text-[9px] font-medium leading-tight ${activeArea.isStale ? "text-amber-500 font-bold" : "text-slate-400"}`}>
             {activeArea.timeAgo} • {activeArea.detailLabel}
           </span>
         </div>

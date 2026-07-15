@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useRef } from "react";
 import { X, Download, Share, Plus } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { dismissPwaPrompt } from "@/store/slices/appSlice";
 
 type Platform = "android" | "ios" | "other";
 
@@ -26,12 +29,12 @@ function isInStandaloneMode(): boolean {
 const DISMISSED_KEY = "lightpulse_pwa_banner_dismissed";
 
 export default function PWAInstallBanner() {
+  const dispatch = useDispatch();
+  const showPwaPrompt = useSelector((state: RootState) => state.app.showPwaPrompt);
   const [platform, setPlatform] = useState<Platform>("other");
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [show, setShow] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [showIOSSteps, setShowIOSSteps] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     // Don't show if already installed as a PWA
@@ -49,27 +52,16 @@ export default function PWAInstallBanner() {
       const handler = (e: Event) => {
         e.preventDefault();
         setDeferredPrompt(e);
-        // Show banner after a 3s delay so the user lands on the page first
-        timerRef.current = setTimeout(() => setShow(true), 3000);
       };
       window.addEventListener("beforeinstallprompt", handler);
       return () => {
         window.removeEventListener("beforeinstallprompt", handler);
-        if (timerRef.current) clearTimeout(timerRef.current);
-      };
-    }
-
-    if (p === "ios") {
-      // iOS: show instructions after a delay since there's no browser event
-      timerRef.current = setTimeout(() => setShow(true), 4000);
-      return () => {
-        if (timerRef.current) clearTimeout(timerRef.current);
       };
     }
   }, []);
 
   const handleDismiss = () => {
-    setShow(false);
+    dispatch(dismissPwaPrompt());
     sessionStorage.setItem(DISMISSED_KEY, "true");
   };
 
@@ -81,11 +73,11 @@ export default function PWAInstallBanner() {
     setDeferredPrompt(null);
     setIsInstalling(false);
     if (outcome === "accepted") {
-      setShow(false);
+      dispatch(dismissPwaPrompt());
     }
   };
 
-  if (!show) return null;
+  if (!showPwaPrompt) return null;
 
   return (
     <div

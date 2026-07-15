@@ -1,10 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Area, Report, ReportStatus } from "@/lib/types";
-import { dbService } from "@/lib/db";
+import { dbService, getAreaStatusFromReports } from "@/lib/db";
+import { normalizeAreaToH3 } from "@/lib/h3-utils";
 
 interface DataState {
   areas: Area[];
   reports: Report[];
+  historicalReports: Record<string, Report[]>;
+  historicalLoading: boolean;
   loading: boolean;
   error: string | null;
 }
@@ -12,7 +15,9 @@ interface DataState {
 const initialState: DataState = {
   areas: [],
   reports: [],
-  loading: false,
+  historicalReports: {},
+  historicalLoading: false,
+  loading: true,
   error: null,
 };
 
@@ -25,9 +30,27 @@ export const fetchInitialData = createAsyncThunk(
         dbService.getAreas(),
         dbService.getReports()
       ]);
-      return { areas, reports };
+      
+      // Filter out polluted entries from previous OSM bug
+      const validAreas = areas.filter(a => !a.name.toLowerCase().includes('ajebo'));
+      const validReports = reports.filter(r => !r.area_name.toLowerCase().includes('ajebo'));
+      
+      return { areas: validAreas, reports: validReports };
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to load initial data";
+      return rejectWithValue(msg);
+    }
+  }
+);
+
+export const fetchHistoricalData = createAsyncThunk(
+  "data/fetchHistorical",
+  async ({ areaId, days }: { areaId: string; days: number }, { rejectWithValue }) => {
+    try {
+      const reports = await dbService.getHistoricalReports(areaId, days);
+      return { areaId, reports };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to load historical data";
       return rejectWithValue(msg);
     }
   }
@@ -43,10 +66,13 @@ export const submitReport = createAsyncThunk(
       // If the area is dynamically generated from location services (OSM/Search/GPS),
       // we must upsert it into the Supabase database first to satisfy the Foreign Key constraint.
       const state: any = getState();
-      const activeArea = state.data.areas.find((a: Area) => a.id === reportData.area_id);
+      let activeArea = state.data.areas.find((a: Area) => a.id === reportData.area_id);
       
       if (activeArea && (activeArea.id.startsWith("osm-") || activeArea.id.startsWith("search-") || activeArea.id.startsWith("custom-") || activeArea.id.startsWith("live-"))) {
+        activeArea = normalizeAreaToH3(activeArea);
         await dbService.saveCustomArea(activeArea);
+        // Update the reportData to use the new H3 snapped area_id
+        reportData = { ...reportData, area_id: activeArea.id };
       }
 
       const report = await dbService.createReport(reportData);
@@ -90,8 +116,9 @@ const dataSlice = createSlice({
   reducers: {
     addLiveAreas: (state, action: PayloadAction<Area[]>) => {
       action.payload.forEach((newArea) => {
-        if (!state.areas.some(a => a.id === newArea.id || a.name.toLowerCase().trim() === newArea.name.toLowerCase().trim())) {
-          state.areas.push(newArea);
+        const normalizedArea = normalizeAreaToH3(newArea);
+        if (!state.areas.some(a => a.id === normalizedArea.id || a.name.toLowerCase().trim() === normalizedArea.name.toLowerCase().trim())) {
+          state.areas.push(normalizedArea);
         }
       });
     },
@@ -145,13 +172,28 @@ const dataSlice = createSlice({
         });
         
         state.areas = Array.from(newAreasMap.values());
+        
+        // Re-process current status based on fetched reports
+        state.areas.forEach(a => {
+          a.current_status = getAreaStatusFromReports(a.id, action.payload.reports) as any;
+        });
+
         state.reports = action.payload.reports;
       })
       .addCase(fetchInitialData.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+      .addCase(fetchHistoricalData.pending, (state) => {
+        state.historicalLoading = true;
+      })
+      .addCase(fetchHistoricalData.fulfilled, (state, action) => {
+        state.historicalLoading = false;
+        state.historicalReports[action.payload.areaId] = action.payload.reports;
+      })
+      .addCase(fetchHistoricalData.rejected, (state) => {
+        state.historicalLoading = false;
+      })
       .addCase(submitReport.fulfilled, (state, action: PayloadAction<Report>) => {
         const idx = state.reports.findIndex(r => r.id === action.payload.id);
         if (idx !== -1) {

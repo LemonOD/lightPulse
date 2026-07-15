@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
+import { setSelectedAreaId, setUserLocation, triggerPwaPrompt } from "@/store/slices/appSlice";
 import { submitReport, addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import { GeocodedPlace } from "@/components/shared/address-autocomplete";
 import { getAreaStatusFromReports } from "@/lib/db";
@@ -13,6 +13,7 @@ import { getPreciseLocation, getHaversineDistance, fetchLiveNearbyAreasFromOSM, 
 import { getDeviceId } from "@/lib/device";
 import { useAutoLocation } from "@/hooks/use-auto-location";
 import { saveHomeArea } from "@/lib/location-memory";
+import { formatDistanceToNow, differenceInMinutes } from "date-fns";
 
 // Helper utility (already defined in @/lib/geolocation but imported/bound here)
 
@@ -44,6 +45,8 @@ export default function MapPage() {
   const reports = useAppSelector((state) => state.data.reports);
   const selectedAreaId = useAppSelector((state) => state.app.selectedAreaId);
   const userLocation = useAppSelector((state) => state.app.userLocation);
+  const isLocating = useAppSelector((state) => state.app.isLocating);
+  const homeAreaId = useAppSelector((state) => state.app.homeAreaId);
 
   const [mapSearch, setMapSearch] = useState("");
   const [showReportModal, setShowReportModal] = useState(false);
@@ -52,27 +55,42 @@ export default function MapPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showLegendMobile, setShowLegendMobile] = useState(false);
   const [centerOnUser, setCenterOnUser] = useState(false);
+  const [isAutocompleteOpen, setIsAutocompleteOpen] = useState(false);
 
   // Global auto-location: registers GPS position & "My Current Location" from any page
   useAutoLocation();
 
   useEffect(() => {
-    if (!userLocation || areas.length === 0) return;
-    
-    let closestArea = areas[0];
-    let minDistance = Infinity;
-    areas.forEach((area) => {
-      const dist = getHaversineDistance(userLocation[0], userLocation[1], area.lat, area.lng);
-      if (dist < minDistance) {
-        minDistance = dist;
-        closestArea = area;
+    if (!selectedAreaId && areas.length > 0 && !isLocating) {
+      if (userLocation) {
+        let nearest = areas[0];
+        let minDist = Infinity;
+        areas.forEach(a => {
+          if (a.lat && a.lng) {
+            const d = getHaversineDistance(userLocation[0], userLocation[1], a.lat, a.lng);
+            if (d < minDist) {
+              minDist = d;
+              nearest = a;
+            }
+          }
+        });
+        dispatch(setSelectedAreaId(nearest.id));
+        setCenterOnUser(true);
+      } else {
+        // Fallback to home area if no GPS
+        if (homeAreaId && areas.some(a => a.id === homeAreaId)) {
+          dispatch(setSelectedAreaId(homeAreaId));
+        } else {
+          // Fallback to a major hub instead of the first alphabetical (e.g., Ajebo)
+          const fallback = areas.find(a => a.name.toLowerCase().includes("yaba")) ||
+                           areas.find(a => a.name.toLowerCase().includes("lagos")) ||
+                           areas[0];
+          dispatch(setSelectedAreaId(fallback.id));
+        }
       }
-    });
-
-    dispatch(setSelectedAreaId(closestArea.id));
-    setCenterOnUser(true);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userLocation]);
+  }, [selectedAreaId, areas, userLocation, isLocating, dispatch, homeAreaId]);
 
   const areasWithStatus = useMemo(() => {
     const uniqueAreasMap = new Map<string, typeof areas[0]>();
@@ -85,20 +103,32 @@ export default function MapPage() {
     const uniqueAreas = Array.from(uniqueAreasMap.values());
 
     return uniqueAreas.map(area => {
-      const status = getAreaStatusFromReports(area.id, reports);
+      let status = getAreaStatusFromReports(area.id, reports);
+      if (status === "UNKNOWN" && (area as any).current_status && (area as any).current_status !== "UNKNOWN") {
+        status = (area as any).current_status;
+      }
+      
       const areaReports = reports.filter(r => r.area_id === area.id);
 
       let timeAgo = "No recent data";
       let detailLabel = "";
+      let isStale = false;
       let confirmsCount = areaReports.reduce((sum, r) => sum + r.confidence_score, 0);
 
       const latestReport = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
       if (latestReport) {
-        // eslint-disable-next-line react-hooks/purity
-        const diffMins = Math.max(1, Math.round((Date.now() - new Date(latestReport.created_at).getTime()) / (1000 * 60)));
-        if (diffMins < 60) timeAgo = `Last updated: ${diffMins} mins ago`;
-        else timeAgo = `Last updated: ${Math.round(diffMins / 60)} hours ago`;
+        const diffMins = differenceInMinutes(new Date(), new Date(latestReport.created_at));
+        if (diffMins < 1) {
+          timeAgo = "Reported just now";
+        } else {
+          timeAgo = `Reported ${formatDistanceToNow(new Date(latestReport.created_at))} ago`;
+        }
+        
+        if (diffMins > 120) {
+           timeAgo += " (Stale)";
+           isStale = true;
+        }
       }
 
       detailLabel = confirmsCount > 0 ? `${confirmsCount} community verifications` : "Pending status validation";
@@ -116,6 +146,7 @@ export default function MapPage() {
         ...area,
         status,
         timeAgo,
+        isStale,
         detailLabel,
         confirmsCount,
         distanceValue
@@ -139,8 +170,19 @@ export default function MapPage() {
   }, [areasWithStatus, mapSearch, userLocation]);
 
   const activeArea = useMemo(() => {
-    return areasWithStatus.find(a => a.id === selectedAreaId) || areasWithStatus[0] || null;
-  }, [areasWithStatus, selectedAreaId]);
+    let targetId = selectedAreaId;
+    if (!targetId && homeAreaId) targetId = homeAreaId;
+
+    if (targetId) {
+      const found = areasWithStatus.find(a => a.id === targetId);
+      if (found) return found;
+    }
+    
+    // Fallback to a major hub instead of the first alphabetical (e.g., Ajebo)
+    return areasWithStatus.find(a => a.name.toLowerCase().includes("yaba")) ||
+           areasWithStatus.find(a => a.name.toLowerCase().includes("lagos")) ||
+           areasWithStatus[0] || null;
+  }, [areasWithStatus, selectedAreaId, homeAreaId]);
 
   const handleSelectArea = (areaId: string) => {
     setCenterOnUser(false); // Stop locking camera to user coordinate
@@ -277,6 +319,7 @@ export default function MapPage() {
 
       setShowReportModal(false);
       setComment("");
+      dispatch(triggerPwaPrompt());
     } catch (err) {
       console.error(err);
       toast.error("Failed to register power status. Please try again.");
@@ -345,16 +388,19 @@ export default function MapPage() {
           showLegendMobile={showLegendMobile}
           setShowLegendMobile={setShowLegendMobile}
           handleSelectPlace={handleSelectPlace}
+          onAutocompleteOpenChange={setIsAutocompleteOpen}
         />
 
         {/* Floating Search Results Dropdown List on Mobile */}
-        <SearchResultsList
-          mapSearch={mapSearch}
-          setMapSearch={setMapSearch}
-          filteredMapAreas={filteredMapAreas}
-          handleSelectArea={handleSelectArea}
-          getBadgeColor={getBadgeColor}
-        />
+        {!isAutocompleteOpen && (
+          <SearchResultsList
+            mapSearch={mapSearch}
+            setMapSearch={setMapSearch}
+            filteredMapAreas={filteredMapAreas}
+            handleSelectArea={handleSelectArea}
+            getBadgeColor={getBadgeColor}
+          />
+        )}
 
         {/* Floating Mobile Bottom Details Card (Only visible on mobile) */}
         <MapDetailsCard

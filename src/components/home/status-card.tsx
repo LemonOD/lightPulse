@@ -169,7 +169,7 @@ export default function StatusCard() {
         </div>
         
         <div className="flex flex-col gap-1.5 mt-1">
-          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight leading-none">
+          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight leading-none dark:text-slate-500">
             {activeArea.name} is <span className={`${currentConfig.textClass} font-semibold`}>{currentConfig.title}</span>
           </h2>
           
@@ -180,16 +180,16 @@ export default function StatusCard() {
         </div>
 
         {/* Real Metrics Row */}
-        <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-slate-100 w-full">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg">
+        <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-slate-100 w-full dark:border-gray-800">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg dark:bg-slate-300">
             <Activity className="h-3.5 w-3.5 text-slate-400" />
             <span><strong className="text-slate-800">{areaReports24h.length}</strong> reports in 24h</span>
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg dark:bg-slate-300">
             <Users className="h-3.5 w-3.5 text-slate-400" />
             <span><strong className="text-slate-800">{communityConfirmations}</strong> verifications</span>
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg dark:bg-slate-300">
             <MapPin className="h-3.5 w-3.5 text-slate-400" />
             <span><strong className="text-slate-800">{activeAreasCount}</strong> global areas active</span>
           </div>

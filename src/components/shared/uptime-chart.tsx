@@ -66,7 +66,7 @@ export default function UptimeChart({ reports, currentStatus }: { reports: Repor
   };
 
   return (
-    <div className="flex flex-col gap-2 p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+    <div className="flex flex-col gap-2 p-3 bg-white border border-slate-100 rounded-2xl shadow-sm dark:bg-black dark:border-slate-700">
       <div className="flex items-center justify-between mb-1">
         <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">12h History</h4>
       </div>

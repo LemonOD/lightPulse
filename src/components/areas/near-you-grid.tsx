@@ -22,7 +22,7 @@ export default function NearYouGrid({
       {/* Desktop Heading layout */}
       <div className="hidden md:flex items-center gap-2 mb-5">
         <Compass className="h-5 w-5 text-emerald-500 stroke-[2.25]" />
-        <h2 className="text-lg font-medium text-slate-800 tracking-tight">
+        <h2 className="text-lg font-medium text-slate-800 tracking-tight dark:text-slate-400">
           Near Your Current Location
         </h2>
       </div>

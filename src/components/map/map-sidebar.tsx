@@ -51,7 +51,7 @@ export default function MapSidebar({
   };
 
   return (
-    <div className="hidden md:flex w-full md:w-96 shrink-0 flex-col bg-white/70 backdrop-blur-md border border-slate-100 p-5 rounded-3xl glass-shadow md:h-full md:overflow-hidden">
+    <div className="hidden md:flex w-full md:w-96 shrink-0 flex-col bg-white/70 backdrop-blur-md border border-slate-100 p-5 rounded-3xl glass-shadow md:h-full md:overflow-hidden dark:bg-black dark:border-gray-800">
       {/* Autocomplete Address Search Header Input */}
       <div className="relative mb-5">
         <AddressAutocomplete
@@ -60,7 +60,7 @@ export default function MapSidebar({
           onClear={() => setMapSearch("")}
           onChangeQuery={setMapSearch}
           initialValue={mapSearch}
-          inputClassName="w-full h-11 pl-10 pr-10 rounded-2xl border border-slate-100 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 text-xs font-semibold tracking-wide"
+          inputClassName="w-full h-11 pl-10 pr-10 rounded-2xl border border-slate-100 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 text-xs font-semibold tracking-wide dark:bg-black dark:border-slate-700 dark:focus:bg-slate-900 dark:focus:border-slate-500 dark:text-slate-300"
           iconSizeClassName="h-4 w-4"
           iconLeftClassName="left-3.5"
         />
@@ -78,12 +78,12 @@ export default function MapSidebar({
             onClick={() => handleSelectArea(item.id)}
             className={`p-4 rounded-xl border text-left cursor-pointer transition-all duration-300 transform active:scale-99 flex flex-col gap-2 ${
               selectedAreaId === item.id
-                ? "bg-white border-[#22C55E] ring-2 ring-emerald-50"
-                : "bg-white/50 border-slate-200 hover:border-slate-200 hover:bg-white/80"
+                ? "bg-white dark:bg-black border-[#22C55E] border-2"
+                : "bg-white/50 border-slate-200 hover:border-slate-200 hover:bg-white/80 dark:bg-black/50 dark:border-slate-800 dark:hover:border-slate-600 dark:hover:bg-black/80"
             }`}
           >
             <div className="flex items-center justify-between gap-4">
-              <span className="text-xs font-extrabold text-slate-800 tracking-tight">
+              <span className="text-xs font-extrabold text-slate-800 tracking-tight dark:text-slate-500">
                 {item.name}
               </span>
               <span

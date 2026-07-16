@@ -50,7 +50,7 @@ export default function AreasHeader({
       {/* Title Header Grid - Hidden on Mobile viewports */}
       <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-none">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-none dark:text-slate-400">
             Neighborhood Directory
           </h1>
           <p className="text-sm font-medium text-slate-500 leading-relaxed mt-2 max-w-xl">

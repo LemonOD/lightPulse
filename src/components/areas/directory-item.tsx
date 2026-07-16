@@ -26,7 +26,7 @@ export default function DirectoryItem({
 }: DirectoryItemProps) {
   if (device === "desktop") {
     const layoutClasses = viewMode === "grid"
-      ? `h-12 px-4 rounded-xl border font-bold text-xs text-slate-700 bg-white/70 hover:bg-white border-slate-100 hover:border-slate-200 hover:-translate-y-0.5 ${
+      ? `h-12 px-4 rounded-xl border font-bold text-xs text-slate-700 bg-white/70 hover:bg-white border-slate-100 hover:border-slate-200 hover:-translate-y-0.5 dark:text-slate-500 dark:bg-black/20 dark:border-slate-900 dark:hover:border-slate-900 dark:hover:bg-slate-900 ${
           selected ? "ring-2 ring-emerald-100 border-emerald-200 bg-white" : ""
         }`
       : `py-2.5 px-4 rounded-xl border text-xs font-medium text-slate-700 bg-white/70 hover:bg-white border-slate-100 hover:border-slate-200 ${

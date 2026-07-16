@@ -75,13 +75,13 @@ export default function MapPreview() {
         </div>
       </Link>
 
-      <div className="hidden md:flex flex-col w-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300">
+      <div className="hidden md:flex flex-col w-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300 dark:border-slate-700">
         
         <Link
           href="/map"
-          className="relative h-44 w-full bg-[#e8f1f7] overflow-hidden flex items-end p-5 group cursor-pointer border-b border-slate-100"
+          className="relative h-44 w-full bg-[#e8f1f7] overflow-hidden flex items-end p-5 group cursor-pointer border-b border-slate-100 dark:border-slate-700"
         >
-          <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-103">
+          <div className="bg-emerald-500 absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-103">
             
             <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 320 176">
               <path d="M 0 140 Q 120 120 180 150 T 320 110 L 320 176 L 0 176 Z" fill="#cbe2f4" />
@@ -163,10 +163,10 @@ export default function MapPreview() {
         </Link>
 
         {/* Bottom Half: Status List table matching mockup perfectly */}
-        <div className="p-5 flex flex-col gap-3.5 bg-white">
+        <div className="p-5 flex flex-col gap-3.5 bg-white dark:bg-black">
           {nearbyAreas.slice(0, 3).map((area) => (
-            <div key={area.id} className="flex items-center justify-between border-b border-slate-50 pb-2.5 last:border-0 last:pb-0">
-              <span className="text-xs font-extrabold text-slate-700 tracking-tight">
+            <div key={area.id} className="flex items-center justify-between border-b border-slate-50 pb-2.5 last:border-0 last:pb-0 dark:border-slate-700">
+              <span className="text-xs font-extrabold text-slate-700 tracking-tight dark:text-slate-400">
                 {area.name}
               </span>
               <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${getBadgeStyle(area.status)}`}>

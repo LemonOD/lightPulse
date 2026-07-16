@@ -356,7 +356,7 @@ export default function MapPage() {
   };
 
   return (
-    <main className="w-full relative flex flex-col select-none md:mx-auto md:w-full md:px-8 md:py-6 md:pb-24 md:flex-row md:gap-6 h-[calc(100vh-4rem)] md:overflow-hidden md:select-none">
+    <main className="w-full relative flex flex-col select-none md:mx-auto md:w-full md:px-8 md:py-6 md:pb-24 md:flex-row md:gap-6 h-[calc(100vh-4rem)] md:overflow-hidden md:select-none dark:bg-black">
 
       {/* LEFT SIDEBAR: Search & Neighborhood List (1/3 Width on Desktop, Hidden on Mobile) */}
       <MapSidebar
@@ -371,7 +371,7 @@ export default function MapPage() {
       />
 
       {/* RIGHT CONTAINER: Interactive Map View (2/3 Width on Desktop, Full Bleed on Mobile) */}
-      <div className="w-full h-full relative z-0 md:flex-1 md:relative md:rounded-3xl md:overflow-hidden md:h-[calc(100vh-5rem)] md:border md:border-slate-100 md:shadow-md">
+      <div className="w-full h-full relative z-0 md:flex-1 md:relative md:rounded-3xl md:overflow-hidden md:h-[calc(100vh-5rem)] md:border md:border-slate-100 md:shadow-md dark:border-gray-800">
 
         {/* Dynamic Client-Side Leaflet Map rendering wrapped in a z-0 container to send map to back */}
         <div className="absolute inset-0 z-0">

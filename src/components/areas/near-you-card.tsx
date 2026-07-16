@@ -36,13 +36,13 @@ export default function NearYouCard({
         onClick={onSelect}
         className={`hidden md:flex rounded-xl border p-6 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between min-h-[140px] ${
           selected
-            ? "bg-white border-slate-200 ring-2 ring-emerald-50"
-            : "bg-white/70 border-slate-200 hover:border-slate-200"
+            ? "bg-white border-emerald-500 border-2 dark:bg-black"
+            : "bg-white/70 border-slate-200 hover:border-slate-200 dark:bg-black dark:border-slate-700"
         }`}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col text-left">
-            <span className="text-base font-bold text-slate-800 tracking-tight">
+            <span className="text-base font-bold text-slate-800 tracking-tight dark:text-slate-400">
               {area.name}
             </span>
             <span className="text-[10px] font-medium text-slate-400">
@@ -59,7 +59,7 @@ export default function NearYouCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 mt-6 border-t border-slate-50 pt-3">
+        <div className="flex items-center justify-between gap-4 mt-6 border-t border-slate-50 pt-3 dark:border-gray-800">
           <div className="flex items-center gap-2">
             {area.avatars && area.avatars.length > 0 ? (
               <div className="flex -space-x-1.5 overflow-hidden">

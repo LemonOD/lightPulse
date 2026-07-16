@@ -20,7 +20,7 @@ export default function SearchResultsList({
   if (mapSearch.trim() === "") return null;
 
   return (
-    <div className="absolute top-20 left-4 right-4 z-20 md:hidden bg-white/95 backdrop-blur-md border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto p-2 flex flex-col gap-1 pointer-events-auto">
+    <div className="absolute top-20 left-4 right-4 z-20 md:hidden bg-white/95 backdrop-blur-md border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto p-2 flex flex-col gap-1 pointer-events-auto dark:bg-black dark:border-gray-800">
       {filteredMapAreas.map((item) => (
         <button
           key={item.id}

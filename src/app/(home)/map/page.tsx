@@ -1,3 +1,5 @@
+/* eslint-disable prefer-const */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -75,6 +77,7 @@ export default function MapPage() {
           }
         });
         dispatch(setSelectedAreaId(nearest.id));
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCenterOnUser(true);
       } else {
         // Fallback to home area if no GPS

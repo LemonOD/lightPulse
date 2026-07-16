@@ -21,7 +21,7 @@ export default function MobileSearchBar({
   onAutocompleteOpenChange,
 }: MobileSearchBarProps) {
   return (
-    <div className="absolute top-4 left-4 right-4 z-10 md:hidden bg-white border border-slate-100 rounded-2xl shadow-lg h-14 flex items-center justify-between px-3 pointer-events-auto">
+    <div className="absolute top-4 left-4 right-4 z-10 md:hidden bg-white border border-slate-100 rounded-2xl shadow-lg h-14 flex items-center justify-between px-3 pointer-events-auto dark:bg-black dark:border-slate-600">
       <AddressAutocomplete
         placeholder="Search addresses or estates..."
         onSelectPlace={handleSelectPlace}
@@ -30,7 +30,7 @@ export default function MobileSearchBar({
         initialValue={mapSearch}
         onOpenChange={onAutocompleteOpenChange}
         className="relative flex-1 min-w-0 group"
-        inputClassName="w-full h-11 pl-9 pr-8 rounded-xl bg-slate-50 border border-slate-100 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:bg-white focus:border-emerald-500 transition-all text-slate-800 leading-none"
+        inputClassName="w-full h-11 pl-9 pr-8 rounded-xl bg-slate-50 border border-slate-100 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:bg-white focus:border-emerald-500 transition-all text-slate-800 leading-none dark:bg-black dark:border-slate-700 dark:focus:bg-slate-900 dark:focus:border-slate-500"
         iconSizeClassName="h-4.5 w-4.5"
         iconLeftClassName="left-3"
       />

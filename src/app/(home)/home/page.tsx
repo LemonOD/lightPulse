@@ -10,7 +10,7 @@ import { useAutoLocation } from "@/hooks/use-auto-location";
 export default function Home() {
   useAutoLocation();
   return (
-    <main className="flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:py-10">
+    <main className="flex-1 mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 pb-24 md:py-10 dark:bg-black">
       
       <div className="flex flex-col gap-6 md:hidden">
         <StatusCard />

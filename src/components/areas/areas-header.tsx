@@ -1,7 +1,9 @@
 "use client";
 
 import { Compass } from "lucide-react";
-import AddressAutocomplete, { GeocodedPlace } from "../shared/address-autocomplete";
+import AddressAutocomplete, {
+  GeocodedPlace,
+} from "../shared/address-autocomplete";
 import { useAppDispatch } from "@/store";
 import { addLiveAreas } from "@/store/slices/dataSlice";
 import { setSelectedAreaId } from "@/store/slices/appSlice";
@@ -18,7 +20,7 @@ export default function AreasHeader({
   searchQuery,
   onSearchChange,
   handleDetectLocation,
-  isLocating
+  isLocating,
 }: AreasHeaderProps) {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -31,14 +33,14 @@ export default function AreasHeader({
       lat: place.lat,
       lng: place.lng,
       description: place.description || "Lagos, Nigeria",
-      region: "Searched Address"
+      region: "Searched Address",
     };
 
     // Add geolocated place to Redux store
     dispatch(addLiveAreas([selectedArea]));
     // Set as active neighborhood focus
     dispatch(setSelectedAreaId(selectedArea.id));
-    
+
     // Redirect smoothly to dashboard
     router.push("/");
   };
@@ -52,7 +54,8 @@ export default function AreasHeader({
             Neighborhood Directory
           </h1>
           <p className="text-sm font-medium text-slate-500 leading-relaxed mt-2 max-w-xl">
-            Browse the real-time power status of all residential and commercial districts across Lagos.
+            Browse the real-time power status of all residential and commercial
+            districts across Lagos.
           </p>
         </div>
 
@@ -79,6 +82,8 @@ export default function AreasHeader({
           onClear={() => onSearchChange("")}
           onChangeQuery={onSearchChange}
           initialValue={searchQuery}
+          inputClassName=" w-full h-14 pl-12 pr-10 rounded-xl border border-slate-200 bg-white placeholder-slate-400 text-sm font-medium transition-all dark:text-white dark:bg-black dark:border-slate-700 dark:focus:bg-slate-900 dark:focus:border-slate-500"
+          iconSizeClassName="h-4.5 w-4.5"
         />
       </div>
     </>

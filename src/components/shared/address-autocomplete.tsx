@@ -101,7 +101,7 @@ export default function AddressAutocomplete({
   useEffect(() => {
     let active = true;
 
-    if (!debouncedQuery.trim() || debouncedQuery.length < 3) {
+    if (!debouncedQuery.trim() || debouncedQuery.length <= 3) {
       Promise.resolve().then(() => {
         if (active) {
           setSuggestions([]);

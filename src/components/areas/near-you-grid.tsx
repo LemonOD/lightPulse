@@ -29,7 +29,7 @@ export default function NearYouGrid({
 
       {/* Mobile Heading layout matching screenshot: Near You followed by a green dot */}
       <div className="flex md:hidden items-center gap-1.5 mb-5 mt-2">
-        <h2 className="text-xl font-medium text-slate-900 tracking-tight">
+        <h2 className="text-xl font-medium text-slate-900 tracking-tight dark:text-slate-400">
           Near You
         </h2>
         <span className="h-2.5 w-2.5 rounded-full bg-[#22C55E] inline-block mt-2 ml-0.5" />

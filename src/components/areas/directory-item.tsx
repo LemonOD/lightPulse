@@ -48,11 +48,11 @@ export default function DirectoryItem({
   return (
     <button
       onClick={onSelect}
-      className={`w-full py-4 px-4.5 rounded-xl border border-slate-150 bg-white flex items-center justify-between text-left transition-all duration-200 active:scale-99 shadow-sm cursor-pointer ${
+      className={`w-full py-4 px-4.5 rounded-xl border border-slate-150 bg-white flex items-center justify-between text-left transition-all duration-200 active:scale-99 shadow-sm cursor-pointer dark:bg-black dark:border-gray-700 ${
         selected ? "ring-2 ring-emerald-50 border-emerald-200" : ""
       }`}
     >
-      <span className="text-sm font-medium text-slate-800">{area.name}</span>
+      <span className="text-sm font-medium text-slate-800 dark:text-slate-400">{area.name}</span>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"

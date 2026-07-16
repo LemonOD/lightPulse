@@ -17,7 +17,7 @@ export default function MapDetailsCard({
   return (
     <div
       onClick={handleOpenReportModal}
-      className="absolute bottom-20 left-4 right-4 z-10 md:hidden bg-white border border-slate-100 p-3 rounded-2xl shadow-xl flex items-center justify-between cursor-pointer transition-all duration-300 transform active:scale-98 pointer-events-auto"
+      className="absolute bottom-20 left-4 right-4 z-10 md:hidden bg-white border border-slate-100 p-3 rounded-2xl shadow-xl flex items-center justify-between cursor-pointer transition-all duration-300 transform active:scale-98 pointer-events-auto dark:bg-black dark:border-gray-800"
     >
       <div className="flex items-center gap-3">
         {/* Colored Indicator Block exactly matching screenshot */}
@@ -39,10 +39,10 @@ export default function MapDetailsCard({
           )}
         </div>
         <div className="flex flex-col">
-          <span className="text-xs font-black text-slate-800 tracking-tight">
+          <span className="text-xs font-black text-slate-800 tracking-tight dark:text-slate-400">
             {activeArea.name === "Yaba" ? "Yaba Tech" : activeArea.name}, Lagos
           </span>
-          <span className={`text-[9px] font-medium leading-tight ${activeArea.isStale ? "text-amber-500 font-bold" : "text-slate-400"}`}>
+          <span className={`text-[10px] font-medium leading-tight ${activeArea.isStale ? "text-amber-500 font-bold" : "text-slate-400"}`}>
             {activeArea.timeAgo} • {activeArea.detailLabel}
           </span>
         </div>

@@ -103,7 +103,7 @@ export default function ActivityFeed() {
     <div className="flex flex-col gap-4 bg-transparent p-0">
 
       <div className="flex items-center justify-between">
-        <h2 className="text-sm text-slate-800 tracking-tight font-semibold">
+        <h2 className="text-sm text-slate-800 tracking-tight font-semibold dark:text-slate-400">
           Activity nearby
         </h2>
         <div className="flex items-center gap-4">
@@ -147,7 +147,7 @@ export default function ActivityFeed() {
           return (
             <div
               key={report.id}
-              className="flex items-center justify-between gap-4 p-4 rounded-md border border-slate-200 bg-white"
+              className="flex items-center justify-between gap-4 p-4 rounded-md border border-slate-200 bg-white dark:bg-black dark:border-slate-800"
             >
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
                 <div className={`shrink-0 h-11 w-11 rounded-full flex items-center justify-center ${iconSettings.bgClass}`}>
@@ -155,10 +155,10 @@ export default function ActivityFeed() {
                 </div>
 
                 <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                  <span className="text-xs font-semibold text-slate-800 tracking-tight leading-tight">
+                  <span className="text-xs font-semibold text-slate-800 tracking-tight leading-tight dark:text-slate-400">
                     {getReportTitle(report.status, report.area_name)}
                   </span>
-                  <span className="text-[10px] font-medium text-slate-400">
+                  <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
                     {getRelativeTime(report.created_at)}
                   </span>
 

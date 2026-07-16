@@ -13,6 +13,9 @@
   --power-unknown: #6b7280;
 }
 
+/* Dark Mode  */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -8,6 +8,7 @@ import { Zap, MapPin, Award, ShieldCheck, Trophy, Target } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { getPreciseLocation, getHaversineDistance } from "@/lib/geolocation";
 import { getDeviceId } from "@/lib/device";
+import ThemeToggle from "./toggle-button";
 
 export default function Header() {
   const pathname = usePathname();
@@ -44,7 +45,7 @@ export default function Header() {
   }, [reports]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md dark:bg-black dark:border-gray-900">
       <div className=" flex  h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         
         <div className="flex md:hidden w-full items-center justify-between">
@@ -53,6 +54,7 @@ export default function Header() {
               <Zap className="h-5 w-5 fill-current" />
               <span>{locationLabel}</span>
             </button>
+            <ThemeToggle />
             
             <div className="relative group flex items-center justify-center cursor-help">
               <LevelIcon className={`h-4 w-4 ${colorText}`} />

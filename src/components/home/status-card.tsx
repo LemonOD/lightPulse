@@ -136,7 +136,7 @@ export default function StatusCard() {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden w-full">
+    <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden w-full dark:bg-black dark:border-gray-800">
       
       <div className={`absolute inset-0 bg-linear-to-b opacity-5 pointer-events-none ${
         currentStatus === "LIGHT_AVAILABLE" ? "from-emerald-500" :

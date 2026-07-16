@@ -19,7 +19,7 @@ export default function DirectoryGroup({
   handleSelectArea
 }: DirectoryGroupProps) {
   return (
-    <div className="flex flex-col md:flex-row gap-2 md:gap-8 border-b border-slate-100/50 pb-6 last:border-0 last:pb-0">
+    <div className="flex flex-col md:flex-row gap-2 md:gap-8 border-b border-slate-100/50 pb-6 last:border-0 last:pb-0 dark:border-slate-900">
       {/* Alpha Indicator Anchor - Desktop */}
       <div className="hidden md:flex w-8 h-8 rounded-xl bg-slate-100 items-center justify-center shrink-0">
         <span className="text-lg text-slate-400 leading-none">

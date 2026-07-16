@@ -186,7 +186,7 @@ export default function UptimeTrend() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
       {/* Trend Chart Container */}
-      <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white/70 p-6 backdrop-blur-md flex flex-col gap-4 relative">
+      <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white/70 p-6 backdrop-blur-md flex flex-col gap-4 relative dark:bg-black dark:border-gray-800">
         {historicalLoading && timeframe !== "24H" && (
           <div className="absolute inset-0 z-20 bg-white/50 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center">
             <Loader2 className="h-6 w-6 text-emerald-500 animate-spin mb-2" />
@@ -196,11 +196,11 @@ export default function UptimeTrend() {
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-col">
-            <h4 className="text-sm text-slate-800 font-semibold tracking-tight">
+            <h4 className="text-sm text-slate-800 font-semibold tracking-tight dark:text-slate-400">
               Uptime Trend
             </h4>
             <span className="text-[11px] font-medium text-slate-500">
-              Showing history for: <strong className="text-slate-700">{activeArea.name}</strong>
+              Showing history for: <strong className="text-slate-700 dark:text-slate-300">{activeArea.name}</strong>
             </span>
           </div>
           

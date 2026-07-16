@@ -26,7 +26,7 @@ export default function AllAreasDirectory({
     <section className="mt-8">
       <div className="flex items-center justify-between gap-6 mb-6">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-medium text-slate-900 tracking-tight">
+          <h2 className="text-xl font-medium text-slate-900 tracking-tight dark:text-slate-400">
             All Areas
           </h2>
         </div>

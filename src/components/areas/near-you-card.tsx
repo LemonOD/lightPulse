@@ -97,12 +97,12 @@ export default function NearYouCard({
 
       <div
         onClick={onSelect}
-        className={`md:hidden rounded-2xl border border-slate-200 bg-white p-5 flex items-center justify-between cursor-pointer transition-all duration-200 active:scale-98 ${
+        className={`md:hidden rounded-2xl border border-slate-200 bg-white p-5 flex items-center justify-between cursor-pointer transition-all duration-200 active:scale-98 dark:bg-black dark:border-gray-700 ${
           selected ? "ring-2 ring-emerald-50 border-emerald-200" : ""
         }`}
       >
         <div className="flex flex-col gap-1.5 text-left">
-          <span className="text-base font-bold text-slate-800 tracking-tight leading-none">
+          <span className="text-base font-bold text-slate-800 tracking-tight leading-none dark:text-slate-400">
             {area.name}
           </span>
           <span className={`text-[10px] font-bold tracking-wider leading-none ${

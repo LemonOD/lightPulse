@@ -9,6 +9,7 @@ interface AppState {
   isLocating: boolean;
   userLocation: [number, number] | null;
   showPwaPrompt: boolean;
+  isLocationInitialized: boolean;
 }
 
 const initialState: AppState = {
@@ -20,6 +21,7 @@ const initialState: AppState = {
   isLocating: false,
   userLocation: null,
   showPwaPrompt: false,
+  isLocationInitialized: false,
 };
 
 const appSlice = createSlice({
@@ -55,6 +57,9 @@ const appSlice = createSlice({
     },
     dismissPwaPrompt: (state) => {
       state.showPwaPrompt = false;
+    },
+    setLocationInitialized: (state, action: PayloadAction<boolean>) => {
+      state.isLocationInitialized = action.payload;
     }
   }
 });
@@ -68,7 +73,8 @@ export const {
   setIsLocating,
   setUserLocation,
   triggerPwaPrompt,
-  dismissPwaPrompt
+  dismissPwaPrompt,
+  setLocationInitialized
 } = appSlice.actions;
 
 export default appSlice.reducer;

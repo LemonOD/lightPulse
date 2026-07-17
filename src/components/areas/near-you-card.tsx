@@ -51,11 +51,7 @@ export default function NearYouCard({
           </div>
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             <StatusBadge status={area.status} />
-            {userLocation && area.distance !== undefined && (
-              <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[8px] font-bold text-blue-500 tracking-widest leading-none">
-                {formatDistance(area.distance)}
-              </span>
-            )}
+        
           </div>
         </div>
 
@@ -64,12 +60,12 @@ export default function NearYouCard({
             {area.avatars && area.avatars.length > 0 ? (
               <div className="flex -space-x-1.5 overflow-hidden">
                 {area.avatars.map((av, idx) => (
-                  <div key={idx} className="relative h-5 w-5 rounded-full ring-2 ring-white overflow-hidden">
+                  <div key={idx} className="relative h-5 w-5 rounded-full ring-2 ring-white dark:ring-slate-900 overflow-hidden">
                     <Image src={av} fill sizes="20px" alt="Active user avatar" className="object-cover" />
                   </div>
                 ))}
                 {area.avatarExtra && (
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[8px] font-extrabold text-slate-500 ring-2 ring-white">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-[8px] font-extrabold text-slate-500 dark:text-slate-400 ring-2 ring-white dark:ring-slate-900">
                     {area.avatarExtra}
                   </span>
                 )}
@@ -106,9 +102,9 @@ export default function NearYouCard({
             {area.name}
           </span>
           <span className={`text-[10px] font-bold tracking-wider leading-none ${
-            area.status === "LIGHT_AVAILABLE" ? "text-emerald-600" :
-            area.status === "LIGHT_OUT" ? "text-red-600" :
-            "text-amber-500"
+            area.status === "LIGHT_AVAILABLE" ? "text-emerald-600 dark:text-emerald-400" :
+            area.status === "LIGHT_OUT" ? "text-red-600 dark:text-red-400" :
+            "text-amber-500 dark:text-amber-400"
           }`}>
             STATUS: {
               area.status === "LIGHT_AVAILABLE" ? "ONLINE" :

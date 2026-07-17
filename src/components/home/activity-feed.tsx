@@ -77,24 +77,24 @@ export default function ActivityFeed() {
   const getStatusIconSettings = (status: string) => {
     if (status === "LIGHT_AVAILABLE") {
       return {
-        bgClass: "bg-emerald-50 text-emerald-500 border border-emerald-100/30",
+        bgClass: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-100/30 dark:border-emerald-500/20",
         icon: Zap,
       };
     }
     if (status === "LIGHT_OUT") {
       return {
-        bgClass: "bg-red-50 text-red-500 border border-red-100/30",
+        bgClass: "bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 border border-red-100/30 dark:border-red-500/20",
         icon: ZapOff,
       };
     }
     if (status === "LOW_VOLTAGE") {
       return {
-        bgClass: "bg-amber-50 text-amber-500 border border-amber-100/30",
+        bgClass: "bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-100/30 dark:border-amber-500/20",
         icon: AlertTriangle,
       };
     }
     return {
-      bgClass: "bg-slate-50 text-slate-500 border border-slate-100/30",
+      bgClass: "bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border border-slate-100/30 dark:border-slate-700/50",
       icon: HelpCircle,
     };
   };
@@ -163,9 +163,9 @@ export default function ActivityFeed() {
                   </span>
 
                   <div className="mt-1">
-                    <span className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wider ${report.status === "LIGHT_AVAILABLE" ? "bg-emerald-50 text-emerald-600" :
-                        report.status === "LIGHT_OUT" ? "bg-red-50 text-red-600" :
-                          "bg-amber-50 text-amber-600"
+                    <span className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wider ${report.status === "LIGHT_AVAILABLE" ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" :
+                        report.status === "LIGHT_OUT" ? "bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400" :
+                          "bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400"
                       }`}>
                       {report.confidence_score} {report.confidence_score === 1 ? "community confirmation" : "community confirmations"}
                     </span>

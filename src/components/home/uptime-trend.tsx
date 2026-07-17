@@ -59,17 +59,19 @@ export default function UptimeTrend() {
 
       if (activeArea.id === "none" || areaReports.length === 0) return defaultData;
 
+      const sortedReports = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const now = new Date();
       for (let i = 0; i < 12; i++) {
         const binStart = new Date(now.getTime() - (12 - i) * 2 * 60 * 60 * 1000);
         const binEnd = new Date(now.getTime() - (11 - i) * 2 * 60 * 60 * 1000);
         
-        const reportsInBin = areaReports.filter(r => {
+        const reportsInBin = sortedReports.filter(r => {
           const rDate = new Date(r.created_at);
           return rDate > binStart && rDate <= binEnd;
         });
 
-        const reportBeforeBin = areaReports.find(r => {
+        // The first report before binStart in a descending sorted array is the latest one before the bin
+        const reportBeforeBin = sortedReports.find(r => {
           const rDate = new Date(r.created_at);
           return rDate <= binStart;
         });
@@ -119,25 +121,30 @@ export default function UptimeTrend() {
 
       if (activeArea.id === "none" || areaReports.length === 0) return defaultData;
 
+      const sortedReports = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const now = new Date();
       for (let i = 0; i < numBins; i++) {
         const binStart = new Date(now.getTime() - (numBins - i) * binSizeDays * 24 * 60 * 60 * 1000);
         const binEnd = new Date(now.getTime() - (numBins - 1 - i) * binSizeDays * 24 * 60 * 60 * 1000);
         
-        const reportInBin = areaReports.find(r => {
+        const reportsInBin = sortedReports.filter(r => {
           const rDate = new Date(r.created_at);
           return rDate > binStart && rDate <= binEnd;
         });
 
-        const reportBeforeBin = areaReports.find(r => {
+        const reportBeforeBin = sortedReports.find(r => {
           const rDate = new Date(r.created_at);
           return rDate <= binStart;
         });
 
-        const activeReport = reportInBin || reportBeforeBin;
+        const startingStatus = reportBeforeBin ? reportBeforeBin.status : "UNKNOWN";
 
-        if (activeReport) {
-          defaultData[i].status = activeReport.status;
+        if (reportsInBin.length === 0) {
+          defaultData[i].status = startingStatus as ReportStatus;
+        } else {
+          // Keep the status of the most recent report inside this bin
+          // Since it's sorted descending, the first one is the most recent
+          defaultData[i].status = reportsInBin[0].status;
         }
       }
       return defaultData;
@@ -222,12 +229,18 @@ export default function UptimeTrend() {
         </div>
 
         {/* Visual chart */}
-        <div className="h-44 w-full flex items-end gap-1 sm:gap-2 px-1 sm:px-2 py-4">
-          {uptimeData.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex-1 h-full flex flex-col items-center justify-end group/bar relative"
-            >
+        <div className="flex-1 flex items-end justify-between gap-1 mt-4 relative min-h-[140px]">
+        {uptimeData.every(d => d.status === "UNKNOWN") && !historicalLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl">
+            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">No Historical Data Available</span>
+          </div>
+        )}
+        
+        {uptimeData.map((item, idx) => (
+          <div
+            key={idx}
+            className="flex-1 h-full flex flex-col items-center justify-end group/bar relative"
+          >
               <div className={`w-full rounded-t-sm sm:rounded-t-lg transition-all duration-700 ease-out cursor-pointer ${getBarHeight(item.status, idx)} ${getBarColor(item.status)}`} />
               
               {/* Tooltip */}

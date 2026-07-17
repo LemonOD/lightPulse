@@ -37,22 +37,33 @@ export default function UptimeChart({ reports, currentStatus }: { reports: Repor
       }
     });
 
-    // Determine initial backward state
-    let currentKnown = 0;
-    if (currentStatus === "LIGHT_AVAILABLE") currentKnown = 100;
-    else if (currentStatus === "LOW_VOLTAGE") currentKnown = 50;
-    else if (currentStatus === "LIGHT_OUT") currentKnown = 10;
-    else if (hours[11].uptime > 0) currentKnown = hours[11].uptime;
+    // Get the status right before our 12h window begins
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    const reportBeforeWindow = [...reports]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // descending
+      .find(r => new Date(r.created_at) <= twelveHoursAgo);
 
-    // Fill blanks with UNKNOWN or carry over state backwards
-    for (let i = hours.length - 1; i >= 0; i--) {
+    let currentKnown = 5; // Minimal bar for unknown
+    if (reportBeforeWindow) {
+      if (reportBeforeWindow.status === "LIGHT_AVAILABLE") currentKnown = 100;
+      else if (reportBeforeWindow.status === "LOW_VOLTAGE") currentKnown = 50;
+      else if (reportBeforeWindow.status === "LIGHT_OUT") currentKnown = 10;
+    }
+
+    // Interpolate state FORWARD
+    for (let i = 0; i < hours.length; i++) {
       if (hours[i].uptime > 0) {
         currentKnown = hours[i].uptime;
-      } else if (currentKnown > 0) {
-        hours[i].uptime = currentKnown;
       } else {
-        hours[i].uptime = 5; // Minimal bar for unknown
+        hours[i].uptime = currentKnown;
       }
+    }
+
+    // Override the most recent hour with currentStatus if explicitly provided and it conflicts
+    // (This helps sync the chart with immediate UI updates)
+    if (currentStatus && currentStatus !== "UNKNOWN") {
+       const latestKnown = currentStatus === "LIGHT_AVAILABLE" ? 100 : currentStatus === "LOW_VOLTAGE" ? 50 : 10;
+       hours[11].uptime = latestKnown;
     }
 
     return hours;

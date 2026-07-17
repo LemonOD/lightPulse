@@ -36,13 +36,13 @@ export default function NearYouCard({
         onClick={onSelect}
         className={`hidden md:flex rounded-xl border p-6 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 flex flex-col justify-between min-h-[140px] ${
           selected
-            ? "bg-white border-slate-200 ring-2 ring-emerald-50"
-            : "bg-white/70 border-slate-200 hover:border-slate-200"
+            ? "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 ring-2 ring-emerald-50 dark:ring-emerald-500/20"
+            : "bg-white/70 dark:bg-slate-900/70 border-slate-200 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700"
         }`}
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col text-left">
-            <span className="text-base font-bold text-slate-800 tracking-tight">
+            <span className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
               {area.name}
             </span>
             <span className="text-[10px] font-medium text-slate-400">
@@ -59,7 +59,7 @@ export default function NearYouCard({
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 mt-6 border-t border-slate-50 pt-3">
+        <div className="flex items-center justify-between gap-4 mt-6 border-t border-slate-50 dark:border-slate-800/50 pt-3">
           <div className="flex items-center gap-2">
             {area.avatars && area.avatars.length > 0 ? (
               <div className="flex -space-x-1.5 overflow-hidden">
@@ -97,12 +97,12 @@ export default function NearYouCard({
 
       <div
         onClick={onSelect}
-        className={`md:hidden rounded-2xl border border-slate-200 bg-white p-5 flex items-center justify-between cursor-pointer transition-all duration-200 active:scale-98 ${
-          selected ? "ring-2 ring-emerald-50 border-emerald-200" : ""
+        className={`md:hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 flex items-center justify-between cursor-pointer transition-all duration-200 active:scale-98 ${
+          selected ? "ring-2 ring-emerald-50 dark:ring-emerald-500/20 border-emerald-200 dark:border-emerald-500/30" : ""
         }`}
       >
         <div className="flex flex-col gap-1.5 text-left">
-          <span className="text-base font-bold text-slate-800 tracking-tight leading-none">
+          <span className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
             {area.name}
           </span>
           <span className={`text-[10px] font-bold tracking-wider leading-none ${

@@ -26,17 +26,17 @@ export default function AllAreasDirectory({
     <section className="mt-8">
       <div className="flex items-center justify-between gap-6 mb-6">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-medium text-slate-900 tracking-tight">
+          <h2 className="text-xl font-medium text-slate-900 dark:text-slate-100 tracking-tight">
             All Areas
           </h2>
         </div>
 
         {/* Toggle view options - hidden on mobile viewports */}
-        <div className="hidden md:flex items-center border border-slate-100 bg-slate-50/50 p-1 rounded-xl glass-shadow">
+        <div className="hidden md:flex items-center border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-1 rounded-xl glass-shadow">
           <button
             onClick={() => setViewMode("grid")}
             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              viewMode === "grid" ? "bg-white text-emerald-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              viewMode === "grid" ? "bg-white dark:bg-slate-800 text-emerald-500 shadow-sm" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
             }`}
           >
             <Grid className="h-4 w-4" />
@@ -44,7 +44,7 @@ export default function AllAreasDirectory({
           <button
             onClick={() => setViewMode("list")}
             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-              viewMode === "list" ? "bg-white text-emerald-500 shadow-sm" : "text-slate-400 hover:text-slate-600"
+              viewMode === "list" ? "bg-white dark:bg-slate-800 text-emerald-500 shadow-sm" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
             }`}
           >
             <List className="h-4 w-4" />

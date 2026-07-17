@@ -66,9 +66,9 @@ export default function UptimeChart({ reports, currentStatus }: { reports: Repor
   };
 
   return (
-    <div className="flex flex-col gap-2 p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+    <div className="flex flex-col gap-2 p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
       <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">12h History</h4>
+        <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">12h History</h4>
       </div>
       <div className="h-24 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -80,7 +80,7 @@ export default function UptimeChart({ reports, currentStatus }: { reports: Repor
                   const data = payload[0].payload;
                   const label = data.uptime >= 80 ? "Power On" : data.uptime >= 40 ? "Low Voltage" : data.uptime > 5 ? "Power Out" : "No Data";
                   return (
-                    <div className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg border border-slate-700">
+                    <div className="bg-slate-800 dark:bg-slate-950 text-white dark:text-slate-200 text-[10px] font-bold px-2 py-1 rounded shadow-lg border border-slate-700 dark:border-slate-800">
                       {data.hourLabel}: {label}
                     </div>
                   );

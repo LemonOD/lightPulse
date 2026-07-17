@@ -186,7 +186,7 @@ export default function UptimeTrend() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
       {/* Trend Chart Container */}
-      <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white/70 p-6 backdrop-blur-md flex flex-col gap-4 relative">
+      <div className="lg:col-span-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 p-6 backdrop-blur-md flex flex-col gap-4 relative">
         {historicalLoading && timeframe !== "24H" && (
           <div className="absolute inset-0 z-20 bg-white/50 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center">
             <Loader2 className="h-6 w-6 text-emerald-500 animate-spin mb-2" />
@@ -196,23 +196,23 @@ export default function UptimeTrend() {
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-col">
-            <h4 className="text-sm text-slate-800 font-semibold tracking-tight">
+            <h4 className="text-sm text-slate-800 dark:text-slate-200 font-semibold tracking-tight">
               Uptime Trend
             </h4>
             <span className="text-[11px] font-medium text-slate-500">
-              Showing history for: <strong className="text-slate-700">{activeArea.name}</strong>
+              Showing history for: <strong className="text-slate-700 dark:text-slate-300">{activeArea.name}</strong>
             </span>
           </div>
           
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
             {(["24H", "7D", "30D", "90D", "1Y"] as Timeframe[]).map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${
                   timeframe === tf 
-                    ? "bg-white text-slate-800 shadow-sm" 
-                    : "text-slate-400 hover:text-slate-600"
+                    ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm" 
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                 }`}
               >
                 {tf}

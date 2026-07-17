@@ -20,7 +20,7 @@ export default function SearchResultsList({
   if (mapSearch.trim() === "") return null;
 
   return (
-    <div className="absolute top-20 left-4 right-4 z-20 md:hidden bg-white/95 backdrop-blur-md border border-slate-100 rounded-2xl shadow-xl max-h-60 overflow-y-auto p-2 flex flex-col gap-1 pointer-events-auto">
+    <div className="absolute top-20 left-4 right-4 z-20 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-2xl shadow-xl max-h-60 overflow-y-auto p-2 flex flex-col gap-1 pointer-events-auto">
       {filteredMapAreas.map((item) => (
         <button
           key={item.id}
@@ -28,13 +28,13 @@ export default function SearchResultsList({
             handleSelectArea(item.id);
             setMapSearch(""); // Clear search to dismiss results
           }}
-          className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors flex items-center justify-between gap-3 rounded-xl border border-transparent hover:border-slate-100 cursor-pointer"
+          className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-between gap-3 rounded-xl border border-transparent hover:border-slate-100 dark:hover:border-slate-700 cursor-pointer"
         >
           <div className="flex flex-col min-w-0">
-            <span className="text-xs font-black text-slate-800 tracking-tight truncate">
+            <span className="text-xs font-black text-slate-800 dark:text-slate-100 tracking-tight truncate">
               {item.name}
             </span>
-            <span className="text-[9px] font-bold text-slate-400 truncate">
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 truncate">
               {item.description}
             </span>
           </div>
@@ -56,7 +56,7 @@ export default function SearchResultsList({
         </button>
       ))}
       {filteredMapAreas.length === 0 && (
-        <div className="py-6 text-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        <div className="py-6 text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
           No matching areas
         </div>
       )}

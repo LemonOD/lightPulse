@@ -168,7 +168,7 @@ export default function ReportForm() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h3 className="text-sm font-medium text-slate-800 tracking-tight">
+      <h3 className="text-sm font-medium text-slate-800 dark:text-slate-200 tracking-tight">
         What&apos;s the status now?
       </h3>
 

@@ -51,7 +51,7 @@ export default function MapSidebar({
   };
 
   return (
-    <div className="hidden md:flex w-full md:w-96 shrink-0 flex-col bg-white/70 backdrop-blur-md border border-slate-100 p-5 rounded-3xl glass-shadow md:h-full md:overflow-hidden">
+    <div className="hidden md:flex w-full md:w-96 shrink-0 flex-col bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-100 dark:border-slate-800 p-5 rounded-3xl glass-shadow md:h-full md:overflow-hidden">
       {/* Autocomplete Address Search Header Input */}
       <div className="relative mb-5">
         <AddressAutocomplete
@@ -60,7 +60,7 @@ export default function MapSidebar({
           onClear={() => setMapSearch("")}
           onChangeQuery={setMapSearch}
           initialValue={mapSearch}
-          inputClassName="w-full h-11 pl-10 pr-10 rounded-2xl border border-slate-100 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-200 focus:ring-1 focus:ring-slate-200 text-xs font-semibold tracking-wide"
+          inputClassName="w-full h-11 pl-10 pr-10 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-200 dark:focus:border-slate-700 focus:ring-1 focus:ring-slate-200 dark:focus:ring-slate-700 text-xs font-semibold tracking-wide text-slate-900 dark:text-slate-100"
           iconSizeClassName="h-4 w-4"
           iconLeftClassName="left-3.5"
         />
@@ -68,7 +68,7 @@ export default function MapSidebar({
 
       {/* Scrollable list of neighborhood statuses */}
       <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1 pb-4">
-        <span className="text-[10px] font-bold tracking-widest text-slate-400 px-1 mb-1">
+        <span className="text-[10px] font-bold tracking-widest text-slate-400 dark:text-slate-500 px-1 mb-1">
           Nearby Status
         </span>
 
@@ -78,12 +78,12 @@ export default function MapSidebar({
             onClick={() => handleSelectArea(item.id)}
             className={`p-4 rounded-xl border text-left cursor-pointer transition-all duration-300 transform active:scale-99 flex flex-col gap-2 ${
               selectedAreaId === item.id
-                ? "bg-white border-[#22C55E] ring-2 ring-emerald-50"
-                : "bg-white/50 border-slate-200 hover:border-slate-200 hover:bg-white/80"
+                ? "bg-white dark:bg-slate-900 border-[#22C55E] dark:border-emerald-500 ring-2 ring-emerald-50 dark:ring-emerald-500/20"
+                : "bg-white/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 hover:bg-white/80 dark:hover:bg-slate-800/80"
             }`}
           >
             <div className="flex items-center justify-between gap-4">
-              <span className="text-xs font-extrabold text-slate-800 tracking-tight">
+              <span className="text-xs font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">
                 {item.name}
               </span>
               <span
@@ -102,7 +102,7 @@ export default function MapSidebar({
             </div>
 
             <div className="flex flex-col gap-0.5">
-              <span className="text-[9px] font-bold text-slate-400">{item.timeAgo}</span>
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">{item.timeAgo}</span>
               <span
                 className={`text-[9px] font-bold tracking-wide flex items-center gap-1 ${
                   item.status === "LIGHT_AVAILABLE"
@@ -122,8 +122,8 @@ export default function MapSidebar({
         ))}
 
         {filteredMapAreas.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-[10px] font-bold uppercase tracking-wider gap-2">
-            <Search className="h-6 w-6 text-slate-300" />
+          <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider gap-2">
+            <Search className="h-6 w-6 text-slate-300 dark:text-slate-600" />
             <span>No areas match search</span>
           </div>
         )}
@@ -136,7 +136,7 @@ export default function MapSidebar({
           <UptimeChart reports={activeAreaReports} currentStatus={activeArea.status} />
           <button
             onClick={handleOpenReportModal}
-            className="w-full h-12 bg-[#22C55E] hover:bg-emerald-600 text-white font-bold text-xs tracking-wider rounded-2xl shadow-md shadow-emerald-100 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+            className="w-full h-12 bg-[#22C55E] hover:bg-emerald-600 text-white font-bold text-xs tracking-wider rounded-2xl shadow-md shadow-emerald-100 dark:shadow-none transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             Report Status

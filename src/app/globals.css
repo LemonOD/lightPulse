@@ -13,6 +13,14 @@
   --power-unknown: #6b7280;
 }
 
+.dark {
+  --background: #020617; /* Slate 950 */
+  --foreground: #f8fafc; /* Slate 50 */
+  --card-bg: rgba(15, 23, 42, 0.85); /* Slate 900 */
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -60,6 +68,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
+.dark .glass {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .glass-premium {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
@@ -69,8 +82,19 @@ body {
               inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
+.dark .glass-premium {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .glass-shadow {
   box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.03);
+}
+
+.dark .glass-shadow {
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -89,6 +113,15 @@ body {
   height: 100%;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.dark .leaflet-container {
+  background-color: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
 }
 
 .leaflet-bar {

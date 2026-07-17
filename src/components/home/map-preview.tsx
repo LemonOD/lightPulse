@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Map, Zap } from "lucide-react";
+import { Map as MapIcon, Zap } from "lucide-react";
 import { useAppSelector } from "@/store";
 import { getHaversineDistance } from "@/lib/geolocation";
 import { getAreaStatusFromReports } from "@/lib/db";
@@ -29,7 +29,33 @@ export default function MapPreview() {
 
   // Dynamically resolve nearby areas mirroring user's location coordinates
   const nearbyAreas = useMemo(() => {
-    const areasWithStatus = areas.map(area => {
+    const uniqueAreasMap = new Map<string, typeof areas[0]>();
+    areas.forEach(a => {
+      const normalizedName = a.name.toLowerCase().trim();
+      const existing = uniqueAreasMap.get(normalizedName);
+      
+      if (!existing) {
+        uniqueAreasMap.set(normalizedName, a);
+      } else {
+        if (a.id === selectedAreaId) {
+          uniqueAreasMap.set(normalizedName, a);
+        } else if (existing.id !== selectedAreaId) {
+          const newReport = reports.find(r => r.area_id === a.id);
+          const existingReport = reports.find(r => r.area_id === existing.id);
+          
+          if (newReport && !existingReport) {
+            uniqueAreasMap.set(normalizedName, a);
+          } else if (newReport && existingReport) {
+            if (new Date(newReport.created_at) > new Date(existingReport.created_at)) {
+              uniqueAreasMap.set(normalizedName, a);
+            }
+          }
+        }
+      }
+    });
+    const uniqueAreas = Array.from(uniqueAreasMap.values());
+
+    const areasWithStatus = uniqueAreas.map(area => {
       const status = getAreaStatusFromReports(area.id, reports);
       let distance = Infinity;
       if (userLocation) {
@@ -68,7 +94,7 @@ export default function MapPreview() {
         </svg>
 
         <div className="absolute flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg transition-transform duration-300 group-hover:scale-105 z-10 select-none">
-          <Map className="h-4 w-4 text-emerald-500 stroke-[2.25]" />
+          <MapIcon className="h-4 w-4 text-emerald-500 stroke-[2.25]" />
           <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
             Explore Local Grid
           </span>

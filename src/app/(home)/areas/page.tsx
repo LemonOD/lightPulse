@@ -125,8 +125,25 @@ export default function AreasPage() {
     const uniqueAreasMap = new Map<string, typeof areas[0]>();
     areas.forEach(a => {
       const normalizedName = a.name.toLowerCase().trim();
-      if (!uniqueAreasMap.has(normalizedName)) {
+      const existing = uniqueAreasMap.get(normalizedName);
+      
+      if (!existing) {
         uniqueAreasMap.set(normalizedName, a);
+      } else {
+        if (a.id === selectedAreaId) {
+          uniqueAreasMap.set(normalizedName, a);
+        } else if (existing.id !== selectedAreaId) {
+          const newReport = reports.find(r => r.area_id === a.id);
+          const existingReport = reports.find(r => r.area_id === existing.id);
+          
+          if (newReport && !existingReport) {
+            uniqueAreasMap.set(normalizedName, a);
+          } else if (newReport && existingReport) {
+            if (new Date(newReport.created_at) > new Date(existingReport.created_at)) {
+              uniqueAreasMap.set(normalizedName, a);
+            }
+          }
+        }
       }
     });
     const uniqueAreas = Array.from(uniqueAreasMap.values());

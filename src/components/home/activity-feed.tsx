@@ -77,24 +77,24 @@ export default function ActivityFeed() {
   const getStatusIconSettings = (status: string) => {
     if (status === "LIGHT_AVAILABLE") {
       return {
-        bgClass: "bg-emerald-50 text-emerald-500 border border-emerald-100/30",
+        bgClass: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-100/30 dark:border-emerald-500/20",
         icon: Zap,
       };
     }
     if (status === "LIGHT_OUT") {
       return {
-        bgClass: "bg-red-50 text-red-500 border border-red-100/30",
+        bgClass: "bg-red-50 dark:bg-red-500/10 text-red-500 dark:text-red-400 border border-red-100/30 dark:border-red-500/20",
         icon: ZapOff,
       };
     }
     if (status === "LOW_VOLTAGE") {
       return {
-        bgClass: "bg-amber-50 text-amber-500 border border-amber-100/30",
+        bgClass: "bg-amber-50 dark:bg-amber-500/10 text-amber-500 dark:text-amber-400 border border-amber-100/30 dark:border-amber-500/20",
         icon: AlertTriangle,
       };
     }
     return {
-      bgClass: "bg-slate-50 text-slate-500 border border-slate-100/30",
+      bgClass: "bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 border border-slate-100/30 dark:border-slate-700/50",
       icon: HelpCircle,
     };
   };
@@ -103,13 +103,13 @@ export default function ActivityFeed() {
     <div className="flex flex-col gap-4 bg-transparent p-0">
 
       <div className="flex items-center justify-between">
-        <h2 className="text-sm text-slate-800 tracking-tight font-semibold">
+        <h2 className="text-sm text-slate-800 dark:text-slate-200 tracking-tight font-semibold">
           Activity nearby
         </h2>
         <div className="flex items-center gap-4">
           <button
             onClick={handleRefresh}
-            className="p-1 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors"
+            className="p-1 rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           >
             <RotateCw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
           </button>
@@ -120,7 +120,7 @@ export default function ActivityFeed() {
         {isRefreshing && (
           <>
             {[1, 2, 3].map((i) => (
-              <div key={`skel-${i}`} className="flex items-center justify-between gap-4 p-4 rounded-md border border-slate-200 bg-white/50 animate-pulse">
+              <div key={`skel-${i}`} className="flex items-center justify-between gap-4 p-4 rounded-md border border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 animate-pulse">
                 <div className="flex items-center gap-3.5 min-w-0 flex-1">
                   <div className="shrink-0 h-11 w-11 rounded-full bg-slate-200"></div>
                   <div className="flex-1 flex flex-col gap-2 min-w-0">
@@ -147,7 +147,7 @@ export default function ActivityFeed() {
           return (
             <div
               key={report.id}
-              className="flex items-center justify-between gap-4 p-4 rounded-md border border-slate-200 bg-white"
+              className="flex items-center justify-between gap-4 p-4 rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
             >
               <div className="flex items-center gap-3.5 min-w-0 flex-1">
                 <div className={`shrink-0 h-11 w-11 rounded-full flex items-center justify-center ${iconSettings.bgClass}`}>
@@ -155,7 +155,7 @@ export default function ActivityFeed() {
                 </div>
 
                 <div className="flex-1 flex flex-col gap-0.5 min-w-0">
-                  <span className="text-xs font-semibold text-slate-800 tracking-tight leading-tight">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 tracking-tight leading-tight">
                     {getReportTitle(report.status, report.area_name)}
                   </span>
                   <span className="text-[10px] font-medium text-slate-400">
@@ -163,9 +163,9 @@ export default function ActivityFeed() {
                   </span>
 
                   <div className="mt-1">
-                    <span className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wider ${report.status === "LIGHT_AVAILABLE" ? "bg-emerald-50 text-emerald-600" :
-                        report.status === "LIGHT_OUT" ? "bg-red-50 text-red-600" :
-                          "bg-amber-50 text-amber-600"
+                    <span className={`inline-flex px-2 py-0.5 rounded-lg text-[9px] font-semibold uppercase tracking-wider ${report.status === "LIGHT_AVAILABLE" ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400" :
+                        report.status === "LIGHT_OUT" ? "bg-red-50 dark:bg-red-500/20 text-red-600 dark:text-red-400" :
+                          "bg-amber-50 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400"
                       }`}>
                       {report.confidence_score} {report.confidence_score === 1 ? "community confirmation" : "community confirmations"}
                     </span>
@@ -179,10 +179,10 @@ export default function ActivityFeed() {
                 title={isTooFar ? "Too far (Must be within 3km)" : undefined}
                 className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border transition-all duration-200 ${
                   isAuthor || isTooFar
-                    ? "bg-slate-50 text-slate-400 border-slate-200 cursor-default"
+                    ? "bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-700 cursor-default"
                     : report.has_confirmed
                     ? "bg-emerald-500 text-white border-emerald-500 cursor-default"
-                    : "bg-white text-slate-600 border-slate-200 cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600 active:scale-95"
+                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600 dark:hover:border-emerald-500 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 active:scale-95"
                 }`}
               >
                 {isAuthor ? (
@@ -207,7 +207,7 @@ export default function ActivityFeed() {
         })}
 
         {!isRefreshing && sortedReports.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2 bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex flex-col items-center justify-center py-12 text-slate-400 gap-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
             <MessageSquare className="h-8 w-8 stroke-[1.5]" />
             <h2 className="text-[10px] font-extrabold uppercase tracking-wider">
               No recent reports in {activeArea.name}
@@ -219,7 +219,7 @@ export default function ActivityFeed() {
       {!isRefreshing && sortedReports.length > visibleCount && (
         <button
           onClick={() => setVisibleCount((prev) => prev + 3)}
-          className="w-full h-11 border border-dashed border-slate-200 hover:border-slate-300 rounded-2xl flex items-center justify-center font-bold text-xs text-slate-500 hover:text-slate-700 bg-white/30 hover:bg-white/50 transition-all duration-200 cursor-pointer"
+          className="w-full h-11 border border-dashed border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 rounded-2xl flex items-center justify-center font-bold text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-white/30 dark:bg-slate-900/30 hover:bg-white/50 dark:hover:bg-slate-900/50 transition-all duration-200 cursor-pointer"
         >
           View More Activity
         </button>

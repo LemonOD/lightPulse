@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { setHomeAreaId, setSelectedAreaId, setUserLocation } from "@/store/slices/appSlice";
+import { setHomeAreaId, setSelectedAreaId, setUserLocation, setLocationInitialized } from "@/store/slices/appSlice";
 import { addLiveAreas, saveCustomAreaThunk } from "@/store/slices/dataSlice";
 import {
   getPreciseLocation,
@@ -17,12 +17,11 @@ export function useAutoLocation() {
   const dispatch = useAppDispatch();
   const areas = useAppSelector((state) => state.data.areas);
   const userLocation = useAppSelector((state) => state.app.userLocation);
-
-  const hasAttemptedRef = useRef(false);
+  const isLocationInitialized = useAppSelector((state) => state.app.isLocationInitialized);
 
   useEffect(() => {
-    if (typeof window === "undefined" || hasAttemptedRef.current) return;
-    hasAttemptedRef.current = true;
+    if (typeof window === "undefined" || isLocationInitialized) return;
+    dispatch(setLocationInitialized(true));
 
     async function initLocation() {
       // Step 1: Try to get the current GPS position.

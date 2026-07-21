@@ -21,7 +21,7 @@ export default function MobileSearchBar({
   onAutocompleteOpenChange,
 }: MobileSearchBarProps) {
   return (
-    <div className="absolute top-4 left-4 right-4 z-10 md:hidden bg-white border border-slate-100 rounded-2xl shadow-lg h-14 flex items-center justify-between px-3 pointer-events-auto">
+    <div className="absolute top-4 left-4 right-4 z-10 md:hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-lg h-14 flex items-center justify-between px-3 pointer-events-auto">
       <AddressAutocomplete
         placeholder="Search addresses or estates..."
         onSelectPlace={handleSelectPlace}
@@ -30,7 +30,7 @@ export default function MobileSearchBar({
         initialValue={mapSearch}
         onOpenChange={onAutocompleteOpenChange}
         className="relative flex-1 min-w-0 group"
-        inputClassName="w-full h-11 pl-9 pr-8 rounded-xl bg-slate-50 border border-slate-100 placeholder-slate-400 text-xs font-semibold focus:outline-none focus:bg-white focus:border-emerald-500 transition-all text-slate-800 leading-none"
+        inputClassName="w-full h-11 pl-9 pr-8 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 placeholder-slate-400 dark:placeholder-slate-500 text-xs font-semibold focus:outline-none focus:bg-white dark:focus:bg-slate-950 focus:border-emerald-500 dark:focus:border-emerald-500 transition-all text-slate-800 dark:text-slate-200 leading-none"
         iconSizeClassName="h-4.5 w-4.5"
         iconLeftClassName="left-3"
       />
@@ -40,7 +40,7 @@ export default function MobileSearchBar({
         className={`h-9 w-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer shrink-0 ml-2 ${
           showLegendMobile
             ? "bg-emerald-500 text-white"
-            : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
+            : "text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300"
         }`}
       >
         <SlidersHorizontal className="h-4.5 w-4.5 stroke-[2.25]" />

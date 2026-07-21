@@ -37,8 +37,14 @@ export default function PWAInstallBanner() {
   const [showIOSSteps, setShowIOSSteps] = useState(false);
 
   useEffect(() => {
-    // Don't show if already installed as a PWA
-    if (isInStandaloneMode()) return;
+    // If currently running as PWA, remember they installed it, and don't show
+    if (isInStandaloneMode()) {
+      localStorage.setItem("lightpulse_pwa_installed", "true");
+      return;
+    }
+
+    // Don't show if we know they already installed it
+    if (localStorage.getItem("lightpulse_pwa_installed") === "true") return;
 
     // Don't show if user already dismissed it this session
     const dismissed = sessionStorage.getItem(DISMISSED_KEY);
@@ -73,6 +79,7 @@ export default function PWAInstallBanner() {
     setDeferredPrompt(null);
     setIsInstalling(false);
     if (outcome === "accepted") {
+      localStorage.setItem("lightpulse_pwa_installed", "true");
       dispatch(dismissPwaPrompt());
     }
   };

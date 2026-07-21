@@ -10,7 +10,7 @@ export default function MobileLocationButton({
   isLocating
 }: MobileLocationButtonProps) {
   return (
-    <div className="md:hidden fixed bottom-10 left-0 right-0 z-30 px-4 pb-6 pt-4 bg-linear-to-t from-white via-white/95 to-white/0 pointer-events-none">
+    <div className="md:hidden fixed bottom-10 left-0 right-0 z-30 px-4 pb-6 pt-4 bg-linear-to-t from-white dark:from-slate-950 via-white/95 dark:via-slate-950/95 to-white/0 dark:to-slate-950/0 pointer-events-none">
       <button
         onClick={handleDetectLocation}
         disabled={isLocating}

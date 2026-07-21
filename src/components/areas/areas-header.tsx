@@ -48,10 +48,10 @@ export default function AreasHeader({
       {/* Title Header Grid - Hidden on Mobile viewports */}
       <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 leading-none">
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 leading-none">
             Neighborhood Directory
           </h1>
-          <p className="text-sm font-medium text-slate-500 leading-relaxed mt-2 max-w-xl">
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400 leading-relaxed mt-2 max-w-xl">
             Browse the real-time power status of all residential and commercial districts across Lagos.
           </p>
         </div>
@@ -62,8 +62,8 @@ export default function AreasHeader({
           disabled={isLocating}
           className={`inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl font-medium text-xs tracking-wider border transition-all duration-300 transform active:scale-95 ${
             isLocating
-              ? "bg-emerald-100 text-emerald-600 border-emerald-200 cursor-default"
-              : "text-[#109541] border-[#109541] hover:bg-emerald-50 cursor-pointer"
+              ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 cursor-default"
+              : "text-[#109541] border-[#109541] hover:bg-emerald-50 dark:text-emerald-400 dark:border-emerald-500 dark:hover:bg-emerald-500/10 cursor-pointer"
           }`}
         >
           <Compass className={`h-4 w-4 ${isLocating ? "animate-spin" : ""}`} />

@@ -12,17 +12,17 @@ interface StatusComponentProps {
 
 // 1. StatusBadge (desktop layout pills)
 export function StatusBadge({ status, className = "" }: StatusComponentProps) {
-  let colorClass = "text-slate-500 bg-slate-50 border-slate-100/50";
+  let colorClass = "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 border-slate-100/50 dark:border-slate-700/50";
   let label = "UNKNOWN";
 
   if (status === "LIGHT_AVAILABLE") {
-    colorClass = "text-emerald-500 bg-emerald-50 border-emerald-100/50";
+    colorClass = "text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20";
     label = "ONLINE";
   } else if (status === "LIGHT_OUT") {
-    colorClass = "text-red-500 bg-red-50 border-red-100/50";
+    colorClass = "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-100/50 dark:border-red-500/20";
     label = "OUTAGE";
   } else if (status === "LOW_VOLTAGE") {
-    colorClass = "text-amber-500 bg-amber-50 border-amber-100/50";
+    colorClass = "text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-100/50 dark:border-amber-500/20";
     label = "FLUCTUATING";
   }
 
@@ -52,14 +52,14 @@ export function StatusDot({ status, className = "" }: StatusComponentProps) {
 
 // 3. StatusIcon (mobile circular status indicators)
 export function StatusIcon({ status, className = "" }: StatusComponentProps) {
-  let containerBg = "bg-slate-100 text-slate-400";
+  let containerBg = "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500";
   
   if (status === "LIGHT_AVAILABLE") {
-    containerBg = "bg-[#22C55E] text-white";
+    containerBg = "bg-[#22C55E] dark:bg-emerald-600/90 text-white";
   } else if (status === "LIGHT_OUT") {
-    containerBg = "bg-[#ef4444] text-white";
+    containerBg = "bg-[#ef4444] dark:bg-red-600/90 text-white";
   } else if (status === "LOW_VOLTAGE") {
-    containerBg = "bg-[#FEF3C7] text-[#f59e0b] border border-[#FEF3C7]/80";
+    containerBg = "bg-[#FEF3C7] dark:bg-amber-500/20 text-[#f59e0b] dark:text-amber-400 border border-[#FEF3C7]/80 dark:border-amber-500/30";
   }
 
   return (

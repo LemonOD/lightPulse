@@ -19,17 +19,17 @@ export default function DirectoryGroup({
   handleSelectArea
 }: DirectoryGroupProps) {
   return (
-    <div className="flex flex-col md:flex-row gap-2 md:gap-8 border-b border-slate-100/50 pb-6 last:border-0 last:pb-0">
+    <div className="flex flex-col md:flex-row gap-2 md:gap-8 border-b border-slate-100/50 dark:border-slate-800/50 pb-6 last:border-0 last:pb-0">
       {/* Alpha Indicator Anchor - Desktop */}
-      <div className="hidden md:flex w-8 h-8 rounded-xl bg-slate-100 items-center justify-center shrink-0">
-        <span className="text-lg text-slate-400 leading-none">
+      <div className="hidden md:flex w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 items-center justify-center shrink-0">
+        <span className="text-lg text-slate-400 dark:text-slate-500 leading-none">
           {letter}
         </span>
       </div>
 
       {/* Alpha Indicator Anchor - Mobile viewports matching mockup */}
       <div className="md:hidden flex shrink-0 mt-3 mb-1">
-        <span className="text-lg font-medium text-[#0A5C36] leading-none uppercase">
+        <span className="text-lg font-medium text-[#0A5C36] dark:text-emerald-500 leading-none uppercase">
           {letter}
         </span>
       </div>

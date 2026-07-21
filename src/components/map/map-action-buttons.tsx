@@ -16,7 +16,7 @@ export default function MapActionButtons({
       {/* Compass/GPS Target button */}
       <button
         onClick={handleDetectLocation}
-        className="h-12 w-12 rounded-full bg-white border border-slate-100 text-slate-800 shadow-xl flex items-center justify-center active:scale-95 transition-all transform cursor-pointer"
+        className="h-12 w-12 rounded-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-200 shadow-xl flex items-center justify-center active:scale-95 transition-all transform cursor-pointer"
       >
         <Compass className="h-5 w-5 stroke-[2.25]" />
       </button>

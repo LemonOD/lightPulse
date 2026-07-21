@@ -96,8 +96,25 @@ export default function MapPage() {
     const uniqueAreasMap = new Map<string, typeof areas[0]>();
     areas.forEach(a => {
       const normalizedName = a.name.toLowerCase().trim();
-      if (!uniqueAreasMap.has(normalizedName)) {
+      const existing = uniqueAreasMap.get(normalizedName);
+      
+      if (!existing) {
         uniqueAreasMap.set(normalizedName, a);
+      } else {
+        if (a.id === selectedAreaId) {
+          uniqueAreasMap.set(normalizedName, a);
+        } else if (existing.id !== selectedAreaId) {
+          const newReport = reports.find(r => r.area_id === a.id);
+          const existingReport = reports.find(r => r.area_id === existing.id);
+          
+          if (newReport && !existingReport) {
+            uniqueAreasMap.set(normalizedName, a);
+          } else if (newReport && existingReport) {
+            if (new Date(newReport.created_at) > new Date(existingReport.created_at)) {
+              uniqueAreasMap.set(normalizedName, a);
+            }
+          }
+        }
       }
     });
     const uniqueAreas = Array.from(uniqueAreasMap.values());
@@ -346,10 +363,10 @@ export default function MapPage() {
   };
 
   const getBadgeColor = (status: string) => {
-    if (status === "LIGHT_AVAILABLE") return "text-emerald-500 bg-emerald-50 border-emerald-100/50";
-    if (status === "LIGHT_OUT") return "text-red-500 bg-red-50 border-red-100/50";
-    if (status === "LOW_VOLTAGE") return "text-amber-500 bg-amber-50 border-amber-100/50";
-    return "text-slate-500 bg-slate-50 border-slate-100/50";
+    if (status === "LIGHT_AVAILABLE") return "text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100/50 dark:border-emerald-500/20";
+    if (status === "LIGHT_OUT") return "text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border-red-100/50 dark:border-red-500/20";
+    if (status === "LOW_VOLTAGE") return "text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-100/50 dark:border-amber-500/20";
+    return "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 border-slate-100/50 dark:border-slate-700/50";
   };
 
   return (
@@ -368,7 +385,7 @@ export default function MapPage() {
       />
 
       {/* RIGHT CONTAINER: Interactive Map View (2/3 Width on Desktop, Full Bleed on Mobile) */}
-      <div className="w-full h-full relative z-0 md:flex-1 md:relative md:rounded-3xl md:overflow-hidden md:h-[calc(100vh-5rem)] md:border md:border-slate-100 md:shadow-md">
+      <div className="w-full h-full relative z-0 md:flex-1 md:relative md:rounded-3xl md:overflow-hidden md:h-[calc(100vh-5rem)] md:border md:border-slate-100 dark:md:border-slate-800 md:shadow-md">
 
         {/* Dynamic Client-Side Leaflet Map rendering wrapped in a z-0 container to send map to back */}
         <div className="absolute inset-0 z-0">
@@ -415,35 +432,35 @@ export default function MapPage() {
         />
 
         {/* MAP LEGEND OVERLAY (Glassmorphic floating container, always visible on desktop, toggleable on mobile) */}
-        <div className={`absolute bottom-5 left-5 z-10 bg-white/95 backdrop-blur-md border border-slate-100 p-4 rounded-2xl glass-shadow flex-col gap-2.5 max-w-[160px] pointer-events-auto ${
+        <div className={`absolute bottom-5 left-5 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-100 dark:border-slate-800 p-4 rounded-2xl glass-shadow flex-col gap-2.5 max-w-[160px] pointer-events-auto ${
           showLegendMobile ? "flex" : "hidden md:flex"
         }`}>
-          <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-0.5">
-            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 mb-0.5">
+            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-500">
               Map Legend
             </span>
             <button
               onClick={() => setShowLegendMobile(false)}
-              className="md:hidden text-slate-400 hover:text-slate-600 cursor-pointer"
+              className="md:hidden text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white shadow-sm" />
+            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900 shadow-sm" />
               <span>Power On</span>
             </div>
-            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-500 border border-white shadow-sm" />
+            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-500 border border-white dark:border-slate-900 shadow-sm" />
               <span>Power Out</span>
             </div>
-            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500 border border-white shadow-sm" />
+            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500 border border-white dark:border-slate-900 shadow-sm" />
               <span>Unstable</span>
             </div>
-            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600">
-              <span className="h-2.5 w-2.5 rounded-full bg-slate-300 border border-white shadow-sm" />
+            <div className="flex items-center gap-2.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600 border border-white dark:border-slate-900 shadow-sm" />
               <span>No Data</span>
             </div>
           </div>

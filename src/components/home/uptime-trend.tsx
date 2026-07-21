@@ -59,17 +59,19 @@ export default function UptimeTrend() {
 
       if (activeArea.id === "none" || areaReports.length === 0) return defaultData;
 
+      const sortedReports = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const now = new Date();
       for (let i = 0; i < 12; i++) {
         const binStart = new Date(now.getTime() - (12 - i) * 2 * 60 * 60 * 1000);
         const binEnd = new Date(now.getTime() - (11 - i) * 2 * 60 * 60 * 1000);
         
-        const reportsInBin = areaReports.filter(r => {
+        const reportsInBin = sortedReports.filter(r => {
           const rDate = new Date(r.created_at);
           return rDate > binStart && rDate <= binEnd;
         });
 
-        const reportBeforeBin = areaReports.find(r => {
+        // The first report before binStart in a descending sorted array is the latest one before the bin
+        const reportBeforeBin = sortedReports.find(r => {
           const rDate = new Date(r.created_at);
           return rDate <= binStart;
         });
@@ -119,25 +121,30 @@ export default function UptimeTrend() {
 
       if (activeArea.id === "none" || areaReports.length === 0) return defaultData;
 
+      const sortedReports = [...areaReports].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       const now = new Date();
       for (let i = 0; i < numBins; i++) {
         const binStart = new Date(now.getTime() - (numBins - i) * binSizeDays * 24 * 60 * 60 * 1000);
         const binEnd = new Date(now.getTime() - (numBins - 1 - i) * binSizeDays * 24 * 60 * 60 * 1000);
         
-        const reportInBin = areaReports.find(r => {
+        const reportsInBin = sortedReports.filter(r => {
           const rDate = new Date(r.created_at);
           return rDate > binStart && rDate <= binEnd;
         });
 
-        const reportBeforeBin = areaReports.find(r => {
+        const reportBeforeBin = sortedReports.find(r => {
           const rDate = new Date(r.created_at);
           return rDate <= binStart;
         });
 
-        const activeReport = reportInBin || reportBeforeBin;
+        const startingStatus = reportBeforeBin ? reportBeforeBin.status : "UNKNOWN";
 
-        if (activeReport) {
-          defaultData[i].status = activeReport.status;
+        if (reportsInBin.length === 0) {
+          defaultData[i].status = startingStatus as ReportStatus;
+        } else {
+          // Keep the status of the most recent report inside this bin
+          // Since it's sorted descending, the first one is the most recent
+          defaultData[i].status = reportsInBin[0].status;
         }
       }
       return defaultData;
@@ -186,7 +193,7 @@ export default function UptimeTrend() {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
       {/* Trend Chart Container */}
-      <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white/70 p-6 backdrop-blur-md flex flex-col gap-4 relative">
+      <div className="lg:col-span-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 p-6 backdrop-blur-md flex flex-col gap-4 relative">
         {historicalLoading && timeframe !== "24H" && (
           <div className="absolute inset-0 z-20 bg-white/50 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center">
             <Loader2 className="h-6 w-6 text-emerald-500 animate-spin mb-2" />
@@ -196,23 +203,23 @@ export default function UptimeTrend() {
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex flex-col">
-            <h4 className="text-sm text-slate-800 font-semibold tracking-tight">
+            <h4 className="text-sm text-slate-800 dark:text-slate-200 font-semibold tracking-tight">
               Uptime Trend
             </h4>
             <span className="text-[11px] font-medium text-slate-500">
-              Showing history for: <strong className="text-slate-700">{activeArea.name}</strong>
+              Showing history for: <strong className="text-slate-700 dark:text-slate-300">{activeArea.name}</strong>
             </span>
           </div>
           
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
             {(["24H", "7D", "30D", "90D", "1Y"] as Timeframe[]).map((tf) => (
               <button
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1.5 text-[10px] font-bold rounded-md transition-all ${
                   timeframe === tf 
-                    ? "bg-white text-slate-800 shadow-sm" 
-                    : "text-slate-400 hover:text-slate-600"
+                    ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm" 
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
                 }`}
               >
                 {tf}
@@ -222,12 +229,18 @@ export default function UptimeTrend() {
         </div>
 
         {/* Visual chart */}
-        <div className="h-44 w-full flex items-end gap-1 sm:gap-2 px-1 sm:px-2 py-4">
-          {uptimeData.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex-1 h-full flex flex-col items-center justify-end group/bar relative"
-            >
+        <div className="flex-1 flex items-end justify-between gap-1 mt-4 relative min-h-[140px]">
+        {uptimeData.every(d => d.status === "UNKNOWN") && !historicalLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-slate-50/50 dark:bg-slate-900/50 rounded-xl">
+            <span className="text-sm font-bold text-slate-500 dark:text-slate-400">No Historical Data Available</span>
+          </div>
+        )}
+        
+        {uptimeData.map((item, idx) => (
+          <div
+            key={idx}
+            className="flex-1 h-full flex flex-col items-center justify-end group/bar relative"
+          >
               <div className={`w-full rounded-t-sm sm:rounded-t-lg transition-all duration-700 ease-out cursor-pointer ${getBarHeight(item.status, idx)} ${getBarColor(item.status)}`} />
               
               {/* Tooltip */}

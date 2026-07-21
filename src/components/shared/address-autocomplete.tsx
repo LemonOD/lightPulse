@@ -53,7 +53,7 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function AddressAutocomplete({
   placeholder = "Search addresses or landmarks...",
   className = "relative w-full group",
-  inputClassName = "w-full h-14 pl-12 pr-10 rounded-xl border border-slate-200 bg-white placeholder-slate-400 focus:outline-none focus:border-slate-250 text-sm font-medium transition-all",
+  inputClassName = "w-full h-14 pl-12 pr-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-250 dark:focus:border-slate-700 text-sm font-medium transition-all text-slate-900 dark:text-slate-100",
   iconSizeClassName = "h-5 w-5",
   iconLeftClassName = "left-4",
   onSelectPlace,
@@ -415,15 +415,15 @@ export default function AddressAutocomplete({
 
       {/* Floating Suggestions Dropdown */}
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-slate-100 bg-white p-1.5 shadow-xl shadow-slate-900/5 z-50 animate-in fade-in slide-in-from-top-1 duration-200">
+        <div className="absolute left-0 right-0 top-full mt-1.5 max-h-60 overflow-y-auto rounded-xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-1.5 shadow-xl shadow-slate-900/5 dark:shadow-none z-50 animate-in fade-in slide-in-from-top-1 duration-200">
           {suggestions.map((place, idx) => (
             <div
               key={place.id}
               onClick={() => handleSelect(place)}
               className={`flex flex-col gap-0.5 px-3.5 py-2.5 rounded-lg cursor-pointer text-left transition-colors ${
                 idx === activeIndex
-                  ? "bg-emerald-50 text-emerald-900 font-medium"
-                  : "hover:bg-slate-50 text-slate-700"
+                  ? "bg-emerald-50 dark:bg-emerald-500/20 text-emerald-900 dark:text-emerald-100 font-medium"
+                  : "hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -431,13 +431,13 @@ export default function AddressAutocomplete({
                   {place.name}
                 </span>
                 {place.isGoogle && (
-                  <span className="text-[7px] font-black uppercase tracking-widest text-slate-300 border border-slate-100 px-1 rounded bg-slate-50 shrink-0 select-none">
+                  <span className="text-[7px] font-black uppercase tracking-widest text-slate-300 dark:text-slate-500 border border-slate-100 dark:border-slate-800 px-1 rounded bg-slate-50 dark:bg-slate-800 shrink-0 select-none">
                     Google
                   </span>
                 )}
               </div>
               <span className={`text-[10px] truncate select-none leading-none ${
-                idx === activeIndex ? "text-emerald-700" : "text-slate-400"
+                idx === activeIndex ? "text-emerald-700 dark:text-emerald-400" : "text-slate-400 dark:text-slate-500"
               }`}>
                 {place.description}
               </span>

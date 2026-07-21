@@ -25,22 +25,22 @@ const MODAL_STATUS_BUTTONS = [
     id: "LIGHT_AVAILABLE" as const,
     name: "Light Restored",
     icon: Zap,
-    activeColor: "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-100",
-    hoverColor: "hover:bg-emerald-50 text-emerald-600 border-emerald-100",
+    activeColor: "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-100 dark:shadow-none",
+    hoverColor: "hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border-emerald-100 dark:border-emerald-500/30",
   },
   {
     id: "LIGHT_OUT" as const,
     name: "Light Out",
     icon: ZapOff,
-    activeColor: "bg-red-500 text-white border-red-500 shadow-md shadow-red-100",
-    hoverColor: "hover:bg-red-50 text-red-600 border-red-100",
+    activeColor: "bg-red-500 text-white border-red-500 shadow-md shadow-red-100 dark:shadow-none",
+    hoverColor: "hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-500 border-red-100 dark:border-red-500/30",
   },
   {
     id: "LOW_VOLTAGE" as const,
     name: "Low Voltage",
     icon: AlertTriangle,
-    activeColor: "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-100",
-    hoverColor: "hover:bg-amber-50 text-amber-600 border-amber-100",
+    activeColor: "bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-100 dark:shadow-none",
+    hoverColor: "hover:bg-amber-50 dark:hover:bg-amber-500/10 text-amber-600 dark:text-amber-500 border-amber-100 dark:border-amber-500/30",
   },
 ] as const;
 
@@ -82,19 +82,19 @@ export default function ReportStatusModal({
         onClick={() => setShowReportModal(false)}
       />
 
-      <div className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 border border-slate-100 shadow-2xl z-50 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-100 dark:border-slate-800 shadow-2xl z-50 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
         <button
           onClick={() => setShowReportModal(false)}
-          className="absolute right-5 top-5 p-1.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+          className="absolute right-5 top-5 p-1.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
         >
           <X className="h-4 w-4" />
         </button>
 
         <div className="flex flex-col gap-1">
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100 w-fit">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 w-fit">
             New Power Report
           </span>
-          <h3 className="text-xl font-extrabold text-slate-800 mt-2">
+          <h3 className="text-xl font-extrabold text-slate-800 dark:text-slate-100 mt-2">
             {isManualSetup ? "Specify Your Location" : `Report for ${activeArea.name}`}
           </h3>
         </div>
@@ -116,7 +116,7 @@ export default function ReportStatusModal({
                     className={`flex flex-col items-center justify-center py-3 rounded-xl border text-[10px] font-bold gap-1.5 transition-all duration-200 transform active:scale-95 cursor-pointer ${
                       isActive
                          ? s.activeColor
-                         : `bg-white border-slate-200 text-slate-600 ${s.hoverColor}`
+                         : `bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 ${s.hoverColor}`
                     }`}
                   >
                     <SIcon className="h-4 w-4" />
@@ -140,7 +140,7 @@ export default function ReportStatusModal({
                   setCustomAreaName(e.target.value);
                 }}
                 placeholder="e.g. Yaba, Lagos"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-300 text-xs font-semibold text-slate-700"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-transparent placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-300 dark:focus:border-slate-600 focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200"
               />
             </div>
           )}
@@ -154,7 +154,7 @@ export default function ReportStatusModal({
               onChange={(e) => setComment(e.target.value)}
               placeholder="e.g. Power restored just now. Very stable phase..."
               rows={3}
-              className="w-full px-4 py-3 rounded-2xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-300 text-xs font-semibold text-slate-700 leading-relaxed"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-transparent placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-300 dark:focus:border-slate-600 focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-600 text-xs font-semibold text-slate-700 dark:text-slate-200 leading-relaxed"
             />
           </div>
 
@@ -168,7 +168,7 @@ export default function ReportStatusModal({
           <button
             type="submit"
             disabled={isSubmitting || !reportStatus || isTooFar}
-            className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 mt-2 cursor-pointer"
+            className="w-full h-12 bg-slate-900 dark:bg-emerald-500 hover:bg-slate-800 dark:hover:bg-emerald-400 text-white font-bold text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 active:scale-95 mt-2 cursor-pointer"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
             <span>{isSubmitting ? "Submitting..." : "Submit Report"}</span>

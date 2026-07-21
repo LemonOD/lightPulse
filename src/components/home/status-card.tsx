@@ -107,7 +107,7 @@ export default function StatusCard() {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative w-full min-h-[160px] animate-pulse">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative w-full min-h-[160px] animate-pulse">
         <div className="hidden md:flex flex-col gap-3 flex-1 w-full">
           <div className="h-4 w-24 bg-slate-200 rounded-full"></div>
           <div className="h-8 w-64 bg-slate-200 rounded-lg mt-2"></div>
@@ -121,7 +121,7 @@ export default function StatusCard() {
   // Empty State / No Data
   if (areaReports24h.length === 0 && activeArea.id !== "none") {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden w-full">
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden w-full">
         <div className="flex flex-col items-center justify-center text-center w-full py-4 gap-4">
           <HelpCircle className="h-12 w-12 text-slate-300 stroke-[1.5]" />
           <div className="space-y-1">
@@ -136,7 +136,7 @@ export default function StatusCard() {
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden w-full">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden w-full">
       
       <div className={`absolute inset-0 bg-linear-to-b opacity-5 pointer-events-none ${
         currentStatus === "LIGHT_AVAILABLE" ? "from-emerald-500" :
@@ -169,7 +169,7 @@ export default function StatusCard() {
         </div>
         
         <div className="flex flex-col gap-1.5 mt-1">
-          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight leading-none">
+          <h2 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight leading-none">
             {activeArea.name} is <span className={`${currentConfig.textClass} font-semibold`}>{currentConfig.title}</span>
           </h2>
           
@@ -180,18 +180,18 @@ export default function StatusCard() {
         </div>
 
         {/* Real Metrics Row */}
-        <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-slate-100 w-full">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg">
-            <Activity className="h-3.5 w-3.5 text-slate-400" />
-            <span><strong className="text-slate-800">{areaReports24h.length}</strong> reports in 24h</span>
+        <div className="flex flex-wrap items-center gap-4 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 w-full">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+            <Activity className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+            <span><strong className="text-slate-800 dark:text-slate-100">{areaReports24h.length}</strong> reports in 24h</span>
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg">
-            <Users className="h-3.5 w-3.5 text-slate-400" />
-            <span><strong className="text-slate-800">{communityConfirmations}</strong> verifications</span>
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+            <Users className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+            <span><strong className="text-slate-800 dark:text-slate-100">{communityConfirmations}</strong> verifications</span>
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-lg">
-            <MapPin className="h-3.5 w-3.5 text-slate-400" />
-            <span><strong className="text-slate-800">{activeAreasCount}</strong> global areas active</span>
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+            <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
+            <span><strong className="text-slate-800 dark:text-slate-100">{activeAreasCount}</strong> global areas active</span>
           </div>
         </div>
       </div>

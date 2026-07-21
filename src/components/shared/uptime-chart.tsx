@@ -37,22 +37,33 @@ export default function UptimeChart({ reports, currentStatus }: { reports: Repor
       }
     });
 
-    // Determine initial backward state
-    let currentKnown = 0;
-    if (currentStatus === "LIGHT_AVAILABLE") currentKnown = 100;
-    else if (currentStatus === "LOW_VOLTAGE") currentKnown = 50;
-    else if (currentStatus === "LIGHT_OUT") currentKnown = 10;
-    else if (hours[11].uptime > 0) currentKnown = hours[11].uptime;
+    // Get the status right before our 12h window begins
+    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
+    const reportBeforeWindow = [...reports]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // descending
+      .find(r => new Date(r.created_at) <= twelveHoursAgo);
 
-    // Fill blanks with UNKNOWN or carry over state backwards
-    for (let i = hours.length - 1; i >= 0; i--) {
+    let currentKnown = 5; // Minimal bar for unknown
+    if (reportBeforeWindow) {
+      if (reportBeforeWindow.status === "LIGHT_AVAILABLE") currentKnown = 100;
+      else if (reportBeforeWindow.status === "LOW_VOLTAGE") currentKnown = 50;
+      else if (reportBeforeWindow.status === "LIGHT_OUT") currentKnown = 10;
+    }
+
+    // Interpolate state FORWARD
+    for (let i = 0; i < hours.length; i++) {
       if (hours[i].uptime > 0) {
         currentKnown = hours[i].uptime;
-      } else if (currentKnown > 0) {
-        hours[i].uptime = currentKnown;
       } else {
-        hours[i].uptime = 5; // Minimal bar for unknown
+        hours[i].uptime = currentKnown;
       }
+    }
+
+    // Override the most recent hour with currentStatus if explicitly provided and it conflicts
+    // (This helps sync the chart with immediate UI updates)
+    if (currentStatus && currentStatus !== "UNKNOWN") {
+       const latestKnown = currentStatus === "LIGHT_AVAILABLE" ? 100 : currentStatus === "LOW_VOLTAGE" ? 50 : 10;
+       hours[11].uptime = latestKnown;
     }
 
     return hours;
@@ -66,9 +77,9 @@ export default function UptimeChart({ reports, currentStatus }: { reports: Repor
   };
 
   return (
-    <div className="flex flex-col gap-2 p-3 bg-white border border-slate-100 rounded-2xl shadow-sm">
+    <div className="flex flex-col gap-2 p-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl shadow-sm">
       <div className="flex items-center justify-between mb-1">
-        <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">12h History</h4>
+        <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">12h History</h4>
       </div>
       <div className="h-24 w-full">
         <ResponsiveContainer width="100%" height="100%">
@@ -80,7 +91,7 @@ export default function UptimeChart({ reports, currentStatus }: { reports: Repor
                   const data = payload[0].payload;
                   const label = data.uptime >= 80 ? "Power On" : data.uptime >= 40 ? "Low Voltage" : data.uptime > 5 ? "Power Out" : "No Data";
                   return (
-                    <div className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg border border-slate-700">
+                    <div className="bg-slate-800 dark:bg-slate-950 text-white dark:text-slate-200 text-[10px] font-bold px-2 py-1 rounded shadow-lg border border-slate-700 dark:border-slate-800">
                       {data.hourLabel}: {label}
                     </div>
                   );

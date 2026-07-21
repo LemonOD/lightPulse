@@ -9,6 +9,7 @@ import { Toaster } from "react-hot-toast";
 import PWAInstallBanner from "@/components/shared/pwa-install-banner";
 import OfflineBanner from "@/components/shared/offline-banner";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 
 const inter = Inter({
@@ -76,37 +77,40 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} h-full antialiased scroll-smooth`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-emerald-100 selection:text-emerald-900">
-        <StoreProvider>
-          <RealtimeProvider>
-            <Toaster
-              position="top-center"
-              toastOptions={{
-                style: {
-                  borderRadius: "1rem",
-                  background: "rgba(255, 255, 255, 0.95)",
-                  backdropFilter: "blur(12px)",
-                  border: "1px solid rgba(226, 232, 240, 0.8)",
-                  boxShadow: "0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -4px rgba(15, 23, 42, 0.05)",
-                  fontSize: "11px",
-                  fontFamily: "var(--font-inter), sans-serif",
-                  fontWeight: "800",
-                  color: "#1e293b",
-                  letterSpacing: "-0.01em",
-                  padding: "10px 16px",
-                },
-              }}
-            />
-            <OfflineBanner />
-            <Header />
-            <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide">
-              {children}
-            </div>
-            <BottomNav />
-            <PWAInstallBanner />
-          </RealtimeProvider>
-        </StoreProvider>
+      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-300">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <StoreProvider>
+            <RealtimeProvider>
+              <Toaster
+                position="top-center"
+                toastOptions={{
+                  style: {
+                    borderRadius: "1rem",
+                    background: "var(--card-bg)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(226, 232, 240, 0.8)",
+                    boxShadow: "0 10px 15px -3px rgba(15, 23, 42, 0.05), 0 4px 6px -4px rgba(15, 23, 42, 0.05)",
+                    fontSize: "11px",
+                    fontFamily: "var(--font-inter), sans-serif",
+                    fontWeight: "800",
+                    color: "var(--foreground)",
+                    letterSpacing: "-0.01em",
+                    padding: "10px 16px",
+                  },
+                }}
+              />
+              <OfflineBanner />
+              <Header />
+              <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide">
+                {children}
+              </div>
+              <BottomNav />
+              <PWAInstallBanner />
+            </RealtimeProvider>
+          </StoreProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

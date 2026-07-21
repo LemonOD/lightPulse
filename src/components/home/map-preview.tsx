@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Map, Zap } from "lucide-react";
+import { Map as MapIcon, Zap } from "lucide-react";
 import { useAppSelector } from "@/store";
 import { getHaversineDistance } from "@/lib/geolocation";
 import { getAreaStatusFromReports } from "@/lib/db";
@@ -21,15 +21,41 @@ export default function MapPreview() {
   };
 
   const getBadgeStyle = (status: string) => {
-    if (status === "LIGHT_AVAILABLE") return "border-emerald-100/50 bg-emerald-50 text-emerald-600";
-    if (status === "LIGHT_OUT") return "border-red-100/50 bg-red-50 text-red-600";
-    if (status === "LOW_VOLTAGE") return "border-amber-100/50 bg-amber-50 text-amber-600";
-    return "border-slate-100/50 bg-slate-50 text-slate-500";
+    if (status === "LIGHT_AVAILABLE") return "border-emerald-100/50 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400";
+    if (status === "LIGHT_OUT") return "border-red-100/50 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400";
+    if (status === "LOW_VOLTAGE") return "border-amber-100/50 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400";
+    return "border-slate-100/50 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400";
   };
 
   // Dynamically resolve nearby areas mirroring user's location coordinates
   const nearbyAreas = useMemo(() => {
-    const areasWithStatus = areas.map(area => {
+    const uniqueAreasMap = new Map<string, typeof areas[0]>();
+    areas.forEach(a => {
+      const normalizedName = a.name.toLowerCase().trim();
+      const existing = uniqueAreasMap.get(normalizedName);
+      
+      if (!existing) {
+        uniqueAreasMap.set(normalizedName, a);
+      } else {
+        if (a.id === selectedAreaId) {
+          uniqueAreasMap.set(normalizedName, a);
+        } else if (existing.id !== selectedAreaId) {
+          const newReport = reports.find(r => r.area_id === a.id);
+          const existingReport = reports.find(r => r.area_id === existing.id);
+          
+          if (newReport && !existingReport) {
+            uniqueAreasMap.set(normalizedName, a);
+          } else if (newReport && existingReport) {
+            if (new Date(newReport.created_at) > new Date(existingReport.created_at)) {
+              uniqueAreasMap.set(normalizedName, a);
+            }
+          }
+        }
+      }
+    });
+    const uniqueAreas = Array.from(uniqueAreasMap.values());
+
+    const areasWithStatus = uniqueAreas.map(area => {
       const status = getAreaStatusFromReports(area.id, reports);
       let distance = Infinity;
       if (userLocation) {
@@ -68,24 +94,24 @@ export default function MapPreview() {
         </svg>
 
         <div className="absolute flex items-center gap-2 bg-white px-5 py-2.5 rounded-full shadow-lg transition-transform duration-300 group-hover:scale-105 z-10 select-none">
-          <Map className="h-4 w-4 text-emerald-500 stroke-[2.25]" />
+          <MapIcon className="h-4 w-4 text-emerald-500 stroke-[2.25]" />
           <span className="text-xs font-black text-slate-800 uppercase tracking-wide">
             Explore Local Grid
           </span>
         </div>
       </Link>
 
-      <div className="hidden md:flex flex-col w-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300">
+      <div className="hidden md:flex flex-col w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden transition-all duration-300">
         
         <Link
           href="/map"
-          className="relative h-44 w-full bg-[#e8f1f7] overflow-hidden flex items-end p-5 group cursor-pointer border-b border-slate-100"
+          className="relative h-44 w-full bg-[#e8f1f7] dark:bg-slate-800 overflow-hidden flex items-end p-5 group cursor-pointer border-b border-slate-100 dark:border-slate-800"
         >
           <div className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-103">
             
             <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 320 176">
-              <path d="M 0 140 Q 120 120 180 150 T 320 110 L 320 176 L 0 176 Z" fill="#cbe2f4" />
-              <path d="M 220 0 Q 250 40 320 30 L 320 0 Z" fill="#cbe2f4" />
+              <path d="M 0 140 Q 120 120 180 150 T 320 110 L 320 176 L 0 176 Z" className="fill-[#cbe2f4] dark:fill-slate-700" />
+              <path d="M 220 0 Q 250 40 320 30 L 320 0 Z" className="fill-[#cbe2f4] dark:fill-slate-700" />
             </svg>
 
             <svg className="absolute inset-0 h-full w-full stroke-white/80 fill-none stroke-[2.5]" viewBox="0 0 320 176">
@@ -116,7 +142,7 @@ export default function MapPreview() {
               
               {nearbyAreas[1] && (
                 <div className="absolute top-10 left-6 flex flex-col items-start leading-none">
-                  <span className="text-slate-800 font-extrabold text-[11px] tracking-tight truncate max-w-[80px]">
+                  <span className="text-slate-800 dark:text-slate-200 font-extrabold text-[11px] tracking-tight truncate max-w-[80px]">
                     {nearbyAreas[1].name}
                   </span>
                   <span className={`h-2 w-2 rounded-full border border-white mt-1 ${getStatusDotClass(nearbyAreas[1].status)}`} />
@@ -125,7 +151,7 @@ export default function MapPreview() {
 
               {nearbyAreas[2] && (
                 <div className="absolute top-14 right-20 flex flex-col items-center">
-                  <span className="text-slate-800 font-black text-xs tracking-tight leading-none truncate max-w-[90px]">
+                  <span className="text-slate-800 dark:text-slate-200 font-black text-xs tracking-tight leading-none truncate max-w-[90px]">
                     {nearbyAreas[2].name}
                   </span>
                   <span className="text-[7px] text-slate-400 font-extrabold uppercase mt-0.5">Nearby</span>
@@ -163,10 +189,10 @@ export default function MapPreview() {
         </Link>
 
         {/* Bottom Half: Status List table matching mockup perfectly */}
-        <div className="p-5 flex flex-col gap-3.5 bg-white">
+        <div className="p-5 flex flex-col gap-3.5 bg-white dark:bg-slate-900">
           {nearbyAreas.slice(0, 3).map((area) => (
-            <div key={area.id} className="flex items-center justify-between border-b border-slate-50 pb-2.5 last:border-0 last:pb-0">
-              <span className="text-xs font-extrabold text-slate-700 tracking-tight">
+            <div key={area.id} className="flex items-center justify-between border-b border-slate-50 dark:border-slate-800/50 pb-2.5 last:border-0 last:pb-0">
+              <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 tracking-tight">
                 {area.name}
               </span>
               <span className={`px-2 py-0.5 rounded-lg border text-[9px] font-black uppercase tracking-wider ${getBadgeStyle(area.status)}`}>
